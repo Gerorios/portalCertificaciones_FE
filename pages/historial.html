@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serytec — Historial</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<div class="layout">
+  <div id="sidebar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Historial de cargas</div>
+        <div class="page-sub">Todas las certificaciones subidas al sistema</div>
+      </div>
+      <a href="upload.html" class="btn btn-primary">📤 Nueva certificación</a>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+        <input type="text" id="buscar" placeholder="Buscar por archivo o contrato..." style="max-width:280px">
+        <select id="filtro-estado" style="width:auto">
+          <option value="">Todos los estados</option>
+          <option value="ok">OK</option>
+          <option value="parcial">Parcial</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Archivo</th>
+              <th>Subido por</th>
+              <th>Contrato</th>
+              <th>Período</th>
+              <th>Líneas</th>
+              <th>Estado</th>
+              <th>Fecha carga</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="body-historial">
+            <tr><td colspan="8" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="paginacion" style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"></div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+Auth.requireLogin();
+renderSidebar("historial");
+
+let todosLosDatos = [];
+const POR_PAGINA = 20;
+let paginaActual = 1;
+
+async function cargar() {
+  try {
+    todosLosDatos = await get("/certificaciones/historial");
+    renderTabla();
+  } catch (err) {
+    document.getElementById("body-historial").innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:var(--rojo)">${err.message}</td></tr>`;
+  }
+}
+
+function filtrar() {
+  const busq  = document.getElementById("buscar").value.toLowerCase();
+  const estado= document.getElementById("filtro-estado").value;
+  return todosLosDatos.filter(h =>
+    (!busq   || h.archivo_nombre.toLowerCase().includes(busq) || (h.contrato || "").toLowerCase().includes(busq)) &&
+    (!estado || h.estado === estado)
+  );
+}
+
+function renderTabla() {
+  const datos    = filtrar();
+  const total    = datos.length;
+  const inicio   = (paginaActual - 1) * POR_PAGINA;
+  const pagina   = datos.slice(inicio, inicio + POR_PAGINA);
+  const esAdmin  = Auth.isAdmin();
+
+  if (!pagina.length) {
+    document.getElementById("body-historial").innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:var(--gris-texto)">Sin resultados</td></tr>`;
+    document.getElementById("paginacion").innerHTML = "";
+    return;
+  }
+
+  document.getElementById("body-historial").innerHTML = pagina.map(h => `
+    <tr>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+          title="${h.archivo_nombre}">${h.archivo_nombre}</td>
+      <td>${h.usuario_nombre}</td>
+      <td>${h.contrato || "—"}</td>
+      <td>${h.periodo || "—"}</td>
+      <td>${h.filas_cargadas}</td>
+      <td><span class="badge ${h.estado === "ok" ? "badge-ok" : h.estado === "parcial" ? "badge-warn" : "badge-err"}">${h.estado}</span></td>
+      <td>${formatFecha(h.cargado_en?.split("T")[0])}</td>
+      <td>
+        ${esAdmin
+          ? `<button class="btn btn-sm btn-danger" onclick="eliminarCarga(${h.id}, '${h.archivo_nombre}')">🗑</button>`
+          : ""}
+      </td>
+    </tr>
+  `).join("");
+
+  // Paginación
+  const totalPaginas = Math.ceil(total / POR_PAGINA);
+  let pag = "";
+  if (totalPaginas > 1) {
+    if (paginaActual > 1) pag += `<button class="btn btn-sm" onclick="irPagina(${paginaActual - 1})">← Anterior</button>`;
+    pag += `<span style="font-size:12px;color:var(--gris-texto);padding:0 8px">Pág ${paginaActual} de ${totalPaginas}</span>`;
+    if (paginaActual < totalPaginas) pag += `<button class="btn btn-sm" onclick="irPagina(${paginaActual + 1})">Siguiente →</button>`;
+  }
+  document.getElementById("paginacion").innerHTML = pag;
+}
+
+function irPagina(n) { paginaActual = n; renderTabla(); }
+
+async function eliminarCarga(id, nombre) {
+  if (!confirm(`¿Eliminar la carga "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    await del(`/admin/cargas/${id}`);
+    todosLosDatos = todosLosDatos.filter(h => h.id !== id);
+    renderTabla();
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+document.getElementById("buscar").addEventListener("input", () => { paginaActual = 1; renderTabla(); });
+document.getElementById("filtro-estado").addEventListener("change", () => { paginaActual = 1; renderTabla(); });
+
+cargar();
+</script>
+</body>
+</html>

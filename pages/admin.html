@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serytec — Administración</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    .modal-bg {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.4); z-index:200;
+      align-items:center; justify-content:center;
+    }
+    .modal-bg.open { display:flex; }
+    .modal {
+      background:var(--blanco); border-radius:var(--radio);
+      padding:1.5rem; width:100%; max-width:420px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.15);
+    }
+    .modal h2 { margin-bottom:1rem; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1rem; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div id="sidebar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Administración</div>
+        <div class="page-sub">Usuarios, estadísticas y configuración del sistema</div>
+      </div>
+    </div>
+
+    <!-- Estadísticas globales -->
+    <div class="metrics-grid" id="metrics-admin" style="margin-bottom:1.5rem">
+      <div class="metric"><div class="metric-label">Cargando...</div><div class="metric-val">—</div></div>
+    </div>
+
+    <!-- Tabla por contrato -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <h2 style="margin-bottom:1rem">Total por contrato (histórico)</h2>
+      <div class="tabla-wrap">
+        <table>
+          <thead><tr><th>Contrato</th><th>Líneas</th><th style="text-align:right">Monto total</th></tr></thead>
+          <tbody id="body-contratos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Usuarios -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2>Usuarios del sistema</h2>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">+ Nuevo usuario</button>
+      </div>
+      <div id="alerta-usuarios" style="margin-bottom:.5rem"></div>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Contratos</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="body-usuarios">
+            <tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal nuevo / editar usuario -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h2 id="modal-titulo">Nuevo usuario</h2>
+    <input type="hidden" id="modal-id">
+
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input type="text" id="m-nombre" placeholder="Juan Pérez">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="m-email" placeholder="juan@serytec.com">
+    </div>
+    <div class="form-group">
+      <label>Contraseña <span style="font-weight:400;color:var(--gris-texto)">(dejar vacío para no cambiar)</span></label>
+      <input type="password" id="m-password" placeholder="••••••••">
+    </div>
+    <div class="form-group">
+      <label>Rol</label>
+      <select id="m-rol" onchange="toggleContratos()">
+        <option value="jefe">Jefe de contrato</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+    <div class="form-group" id="grupo-contratos">
+      <label>Contratos asignados <span style="font-weight:400;color:var(--gris-texto)">(separados por coma, ej: K2,K6)</span></label>
+      <input type="text" id="m-contratos" placeholder="K2,K6">
+    </div>
+    <div class="form-group">
+      <label>Estado</label>
+      <select id="m-activo">
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
+    </div>
+
+    <div id="alerta-modal"></div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar" onclick="guardarUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+Auth.requireLogin();
+Auth.requireAdmin();
+renderSidebar("admin");
+
+async function cargarDatos() {
+  try {
+    const [stats, usuarios] = await Promise.all([
+      get("/admin/estadisticas"),
+      get("/admin/usuarios"),
+    ]);
+    renderStats(stats);
+    renderUsuarios(usuarios);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderStats(s) {
+  document.getElementById("metrics-admin").innerHTML = `
+    <div class="metric"><div class="metric-label">Total líneas en BD</div><div class="metric-val">${Number(s.total_filas).toLocaleString("es-AR")}</div></div>
+    <div class="metric"><div class="metric-label">Monto total histórico</div><div class="metric-val verde">${formatMonto(s.total_monto)}</div></div>
+    <div class="metric"><div class="metric-label">Contratos activos</div><div class="metric-val">${s.por_contrato.length}</div></div>
+  `;
+  document.getElementById("body-contratos").innerHTML = s.por_contrato.map(c => `
+    <tr>
+      <td><span class="badge badge-info">${c.codigo_k}</span></td>
+      <td>${Number(c.lineas).toLocaleString("es-AR")}</td>
+      <td style="text-align:right;font-weight:500">${formatMonto(c.monto)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderUsuarios(lista) {
+  document.getElementById("body-usuarios").innerHTML = lista.map(u => `
+    <tr>
+      <td>${u.nombre}</td>
+      <td>${u.email}</td>
+      <td><span class="badge ${u.rol === "admin" ? "badge-admin" : "badge-info"}">${u.rol}</span></td>
+      <td>${u.contratos || "—"}</td>
+      <td><span class="badge ${u.activo ? "badge-ok" : "badge-err"}">${u.activo ? "Activo" : "Inactivo"}</span></td>
+      <td>
+        <button class="btn btn-sm" onclick='abrirModalEditar(${JSON.stringify(u)})'>Editar</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function abrirModalNuevo() {
+  document.getElementById("modal-titulo").textContent = "Nuevo usuario";
+  document.getElementById("modal-id").value = "";
+  document.getElementById("m-nombre").value = "";
+  document.getElementById("m-email").value = "";
+  document.getElementById("m-email").disabled = false;
+  document.getElementById("m-password").value = "";
+  document.getElementById("m-rol").value = "jefe";
+  document.getElementById("m-contratos").value = "";
+  document.getElementById("m-activo").value = "true";
+  clearAlert(document.getElementById("alerta-modal"));
+  toggleContratos();
+  document.getElementById("modal-bg").classList.add("open");
+}
+
+function abrirModalEditar(u) {
+  document.getElementById("modal-titulo").textContent = "Editar usuario";
+  document.getElementById("modal-id").value = u.id;
+  document.getElementById("m-nombre").value = u.nombre;
+  document.getElementById("m-email").value = u.email;
+  document.getElementById("m-email").disabled = true;
+  document.getElementById("m-password").value = "";
+  document.getElementById("m-rol").value = u.rol;
+  document.getElementById("m-contratos").value = u.contratos || "";
+  document.getElementById("m-activo").value = u.activo ? "true" : "false";
+  clearAlert(document.getElementById("alerta-modal"));
+  toggleContratos();
+  document.getElementById("modal-bg").classList.add("open");
+}
+
+function cerrarModal() {
+  document.getElementById("modal-bg").classList.remove("open");
+}
+
+function toggleContratos() {
+  const esAdmin = document.getElementById("m-rol").value === "admin";
+  document.getElementById("grupo-contratos").style.display = esAdmin ? "none" : "block";
+}
+
+async function guardarUsuario() {
+  const id       = document.getElementById("modal-id").value;
+  const nombre   = document.getElementById("m-nombre").value.trim();
+  const email    = document.getElementById("m-email").value.trim();
+  const password = document.getElementById("m-password").value;
+  const rol      = document.getElementById("m-rol").value;
+  const contratos= document.getElementById("m-contratos").value.trim() || null;
+  const activo   = document.getElementById("m-activo").value === "true";
+  const alertaM  = document.getElementById("alerta-modal");
+
+  if (!nombre) { showAlert(alertaM, "El nombre es obligatorio"); return; }
+
+  const btn = document.getElementById("btn-guardar");
+  btn.disabled = true;
+
+  try {
+    if (id) {
+      const body = { nombre, rol, contratos, activo };
+      if (password) body.password = password;
+      await patch(`/admin/usuarios/${id}`, body);
+    } else {
+      if (!email || !password) { showAlert(alertaM, "Email y contraseña son obligatorios"); btn.disabled = false; return; }
+      await post("/admin/usuarios", { nombre, email, password, rol, contratos });
+    }
+    cerrarModal();
+    showAlert(document.getElementById("alerta-usuarios"), "Usuario guardado correctamente", "ok");
+    const lista = await get("/admin/usuarios");
+    renderUsuarios(lista);
+  } catch (err) {
+    showAlert(alertaM, err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById("modal-bg").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-bg")) cerrarModal();
+});
+
+cargarDatos();
+</script>
+</body>
+</html>
