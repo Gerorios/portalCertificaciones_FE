@@ -3,7 +3,7 @@
    Cliente HTTP centralizado + helpers de auth
 ================================================ */
 
-const API = "http://localhost:8000";  // cambiar por la URL de Render en producción
+const API = "https://portalcertificaciones-bk.onrender.com";  // cambiar por la URL de Render en producción
 
 /* ── Helpers de token ── */
 const Auth = {
