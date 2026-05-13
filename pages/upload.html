@@ -332,10 +332,8 @@ function renderTabla() {
     const provCls = provOk ? "celda-edit" : "celda-edit invalida";
 
     const badge = f.tiene_error
-      ? '<span class="badge badge-err">Error</span>'
-      : !provOk
-        ? '<span class="badge badge-warn">Prov. invalida</span>'
-        : '<span class="badge badge-ok">OK</span>';
+  ? `<span class="badge badge-err" title="${f.error_detalle || 'Error'}">⚠ ${f.error_detalle || 'Error'}</span>`
+  : '<span class="badge badge-ok">OK</span>';
 
     return `<tr id="fila-${idx}" class="${f.tiene_error ? 'fila-error' : ''}">
       <td style="font-size:11px;color:var(--gris-texto);white-space:nowrap">${f.hoja_origen}</td>
