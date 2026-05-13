@@ -260,13 +260,28 @@ document.getElementById("btn-paso1").addEventListener("click", async () => {
 
 // ── Selector de hojas ────────────────────────────────────────
 function mostrarSelectorHojas(hojas) {
-  hojasSeleccionadas = new Set(hojas);
-  document.getElementById("hojas-grid").innerHTML = hojas.map(h => `
-    <label class="hoja-chip selected" id="chip-${h.replace(/[^a-zA-Z0-9]/g,'-')}">
-      <input type="checkbox" checked onchange="toggleHoja('${h}', this.checked)">
-      ${h}
-    </label>
-  `).join("");
+    const contratos = Auth.getUser().contratos || [];
+    
+    // Si es admin ve todo, si es jefe solo sus hojas
+    const hojasFiltradas = Auth.isAdmin() 
+        ? hojas 
+        : hojas.filter(h => contratos.some(k => h.toUpperCase().includes(k.toUpperCase())));
+
+    // Las hojas que no corresponden se muestran deshabilitadas
+    hojasSeleccionadas = new Set(hojasFiltradas);
+    
+    document.getElementById("hojas-grid").innerHTML = hojas.map(h => {
+        const permitida = Auth.isAdmin() || contratos.some(k => h.toUpperCase().includes(k.toUpperCase()));
+        return `
+            <label class="hoja-chip ${permitida ? 'selected' : ''}" 
+                   id="chip-${h.replace(/[^a-zA-Z0-9]/g,'-')}"
+                   style="${!permitida ? 'opacity:.4;cursor:not-allowed' : ''}">
+                <input type="checkbox" ${permitida ? 'checked' : 'disabled'}
+                    onchange="toggleHoja('${h}', this.checked)">
+                ${h} ${!permitida ? '🔒' : ''}
+            </label>
+        `;
+    }).join("");
 }
 
 function toggleHoja(hoja, activa) {
