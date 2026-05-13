@@ -47,20 +47,18 @@
     <div class="page-header">
       <div>
         <div class="page-title" id="titulo-page">Dashboard</div>
-        <div class="page-sub">Hacé clic en una fila para ver el detalle completo</div>
+        <div class="page-sub">Hace clic en una fila para ver el detalle completo</div>
       </div>
       <a href="upload.html" class="btn btn-primary">+ Nueva certificacion</a>
     </div>
 
-    <!-- Metricas globales -->
     <div class="metrics-grid" id="metrics"></div>
 
-    <!-- Tabla resumen -->
     <div class="card" style="margin-bottom:1.25rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
         <h2>Total facturado por periodo</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="filtro-anio"     style="width:auto"><option value="">Todos los años</option></select>
+          <select id="filtro-anio"     style="width:auto"><option value="">Todos los anos</option></select>
           <select id="filtro-mes"      style="width:auto"><option value="">Todos los meses</option></select>
           <select id="filtro-contrato" style="width:auto"><option value="">Todos los contratos</option></select>
         </div>
@@ -69,9 +67,7 @@
         <table>
           <thead>
             <tr>
-              <th>Periodo</th>
-              <th>Contrato</th>
-              <th>Lineas</th>
+              <th>Periodo</th><th>Contrato</th><th>Lineas</th>
               <th style="text-align:right">Total mes</th>
               <th style="text-align:center">Detalle</th>
             </tr>
@@ -83,7 +79,6 @@
       </div>
     </div>
 
-    <!-- Historial reciente -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <h2>Ultimas certificaciones cargadas</h2>
@@ -106,7 +101,7 @@
   </main>
 </div>
 
-<!-- Modal detalle -->
+<!-- Modal detalle certificacion -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal">
     <div class="modal-header">
@@ -116,9 +111,7 @@
       </div>
       <button class="btn-cerrar" onclick="cerrarModal()">x</button>
     </div>
-
     <div class="modal-metrics" id="modal-metrics"></div>
-
     <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
       <input type="text" id="modal-buscar" placeholder="Buscar item o tarea..." style="max-width:260px">
       <select id="modal-tipo" style="width:auto">
@@ -127,7 +120,6 @@
         <option value="CAPEX">Solo CAPEX</option>
       </select>
     </div>
-
     <div class="tabla-wrap" style="max-height:380px;overflow-y:auto">
       <table>
         <thead style="position:sticky;top:0;z-index:1">
@@ -142,10 +134,30 @@
         <tbody id="modal-body"></tbody>
       </table>
     </div>
-
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
       <span id="modal-count" style="font-size:12px;color:var(--gris-texto)"></span>
       <button class="btn" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal certificaciones pendientes -->
+<div class="modal-bg" id="modal-pendientes" style="z-index:300">
+  <div class="modal" style="max-width:500px;text-align:center">
+    <div style="font-size:52px;margin-bottom:.75rem">⚠️</div>
+    <h2 style="margin-bottom:.5rem;font-size:18px">Certificaciones pendientes</h2>
+    <p style="color:var(--gris-texto);font-size:13px;margin-bottom:1rem">
+      Todavia no cargaste las certificaciones de
+      <strong id="pendientes-periodo"></strong> para los siguientes contratos:
+    </p>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1rem"
+         id="pendientes-lista"></div>
+    <p style="font-size:12px;color:var(--gris-texto);margin-bottom:1.5rem;padding:.75rem;background:var(--amarillo-light);border-radius:8px">
+      Recorda que la fecha limite de carga es el dia 10 de cada mes.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <a href="upload.html" class="btn btn-primary">Cargar ahora</a>
+      <button class="btn" onclick="cerrarModalPendientes()">Recordarme despues</button>
     </div>
   </div>
 </div>
@@ -177,19 +189,47 @@ async function cargarDatos() {
     renderResumen();
     renderMetricas(datosResumen);
     renderHistorial(historial.slice(0, 8));
-  } catch (err) {
-    console.error(err);
-  }
+    verificarPendientes(resumen);
+  } catch (err) { console.error(err); }
 }
 
-// Suma OPEX + CAPEX por periodo+contrato
+// ── Alerta pendientes ─────────────────────────────────────────
+function verificarPendientes(resumen) {
+  if (!user || user.rol === "admin") return;
+
+  const hoy = new Date();
+  if (hoy.getDate() < 10) return;
+
+  const mesActual = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0");
+  const contratosUsuario = user.contratos || [];
+
+  const cargadosEsteMes = new Set(
+    resumen.filter(r => r.periodo === mesActual).map(r => r.contrato)
+  );
+
+  const pendientes = contratosUsuario.filter(k => !cargadosEsteMes.has(k));
+  if (!pendientes.length) return;
+
+  const [anio, mes] = mesActual.split("-");
+  document.getElementById("pendientes-periodo").textContent =
+    MESES[parseInt(mes)] + " " + anio;
+  document.getElementById("pendientes-lista").innerHTML =
+    pendientes.map(k =>
+      `<span class="badge badge-warn" style="font-size:13px;padding:5px 14px">${k}</span>`
+    ).join("");
+  document.getElementById("modal-pendientes").classList.add("open");
+}
+
+function cerrarModalPendientes() {
+  document.getElementById("modal-pendientes").classList.remove("open");
+}
+
+// ── Resumen ───────────────────────────────────────────────────
 function agruparResumen(datos) {
   const mapa = {};
   datos.forEach(r => {
     const key = r.periodo + "__" + r.contrato;
-    if (!mapa[key]) {
-      mapa[key] = { periodo: r.periodo, contrato: r.contrato, lineas: 0, monto_total: 0 };
-    }
+    if (!mapa[key]) mapa[key] = { periodo: r.periodo, contrato: r.contrato, lineas: 0, monto_total: 0 };
     mapa[key].lineas      += Number(r.lineas      || 0);
     mapa[key].monto_total += Number(r.monto_total || 0);
   });
@@ -213,9 +253,7 @@ function filtrar() {
   const k    = document.getElementById("filtro-contrato").value;
   return datosResumen.filter(r => {
     const [ra, rm] = r.periodo.split("-");
-    return (!mes  || rm === mes)  &&
-           (!anio || ra === anio) &&
-           (!k    || r.contrato === k);
+    return (!mes || rm === mes) && (!anio || ra === anio) && (!k || r.contrato === k);
   });
 }
 
@@ -223,7 +261,7 @@ function renderResumen() {
   const datos = filtrar();
   if (!datos.length) {
     document.getElementById("body-resumen").innerHTML =
-      '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin datos para los filtros seleccionados</td></tr>';
+      '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
     return;
   }
   document.getElementById("body-resumen").innerHTML = datos.map(r => `
@@ -243,41 +281,30 @@ function renderMetricas(datos) {
   const periodos    = [...new Set(datos.map(r => r.periodo))].sort();
   const ultimo      = periodos[periodos.length - 1] || "—";
   document.getElementById("metrics").innerHTML = `
-    <div class="metric">
-      <div class="metric-label">Total facturado historico</div>
-      <div class="metric-val verde">${formatMonto(totalMonto)}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Lineas certificadas</div>
-      <div class="metric-val">${totalLineas.toLocaleString("es-AR")}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Ultimo periodo cargado</div>
-      <div class="metric-val">${ultimo}</div>
-    </div>
+    <div class="metric"><div class="metric-label">Total facturado historico</div><div class="metric-val verde">${formatMonto(totalMonto)}</div></div>
+    <div class="metric"><div class="metric-label">Lineas certificadas</div><div class="metric-val">${totalLineas.toLocaleString("es-AR")}</div></div>
+    <div class="metric"><div class="metric-label">Ultimo periodo cargado</div><div class="metric-val">${ultimo}</div></div>
   `;
 }
 
 function renderHistorial(datos) {
   if (!datos.length) {
     document.getElementById("body-historial").innerHTML =
-      '<tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Sin cargas registradas</td></tr>';
+      '<tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Sin cargas</td></tr>';
     return;
   }
   document.getElementById("body-historial").innerHTML = datos.map(h => `
     <tr>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
           title="${h.archivo_nombre}">${h.archivo_nombre}</td>
-      <td>${h.contrato  || "—"}</td>
-      <td>${h.periodo   || "—"}</td>
-      <td>${h.filas_cargadas}</td>
+      <td>${h.contrato||"—"}</td><td>${h.periodo||"—"}</td><td>${h.filas_cargadas}</td>
       <td><span class="badge ${h.estado==="ok"?"badge-ok":h.estado==="parcial"?"badge-warn":"badge-err"}">${h.estado}</span></td>
       <td>${formatFecha((h.cargado_en||"").split("T")[0])}</td>
     </tr>
   `).join("");
 }
 
-// Modal detalle
+// ── Modal detalle ─────────────────────────────────────────────
 async function abrirDetalle(periodo, contrato) {
   document.getElementById("modal-titulo").textContent = contrato + " — " + periodo;
   document.getElementById("modal-sub").textContent    = "Cargando...";
@@ -287,28 +314,16 @@ async function abrirDetalle(periodo, contrato) {
   document.getElementById("modal-buscar").value       = "";
   document.getElementById("modal-tipo").value         = "";
   document.getElementById("modal-bg").classList.add("open");
-
   try {
     detalleActual = await get("/certificaciones/detalle?periodo=" + periodo + "&contrato=" + contrato);
-
-    const total = detalleActual.reduce((s,r) => s + Number(r.total_mes  || 0), 0);
-    const opex  = detalleActual.filter(r => r.tipo === "OPEX").reduce((s,r)  => s + Number(r.total_mes || 0), 0);
-    const capex = detalleActual.filter(r => r.tipo === "CAPEX").reduce((s,r) => s + Number(r.total_mes || 0), 0);
-
+    const total = detalleActual.reduce((s,r) => s + Number(r.total_mes||0), 0);
+    const opex  = detalleActual.filter(r=>r.tipo==="OPEX").reduce((s,r)=>s+Number(r.total_mes||0),0);
+    const capex = detalleActual.filter(r=>r.tipo==="CAPEX").reduce((s,r)=>s+Number(r.total_mes||0),0);
     document.getElementById("modal-sub").textContent = detalleActual.length + " lineas";
     document.getElementById("modal-metrics").innerHTML = `
-      <div class="modal-metric">
-        <div class="modal-metric-label">Total certificado</div>
-        <div class="modal-metric-val" style="color:var(--verde)">${formatMonto(total)}</div>
-      </div>
-      <div class="modal-metric">
-        <div class="modal-metric-label">OPEX</div>
-        <div class="modal-metric-val">${formatMonto(opex)}</div>
-      </div>
-      <div class="modal-metric">
-        <div class="modal-metric-label">CAPEX</div>
-        <div class="modal-metric-val">${formatMonto(capex)}</div>
-      </div>
+      <div class="modal-metric"><div class="modal-metric-label">Total certificado</div><div class="modal-metric-val" style="color:var(--verde)">${formatMonto(total)}</div></div>
+      <div class="modal-metric"><div class="modal-metric-label">OPEX</div><div class="modal-metric-val">${formatMonto(opex)}</div></div>
+      <div class="modal-metric"><div class="modal-metric-label">CAPEX</div><div class="modal-metric-val">${formatMonto(capex)}</div></div>
     `;
     renderDetalle();
   } catch (err) {
@@ -321,7 +336,7 @@ function renderDetalle() {
   const busq = document.getElementById("modal-buscar").value.toLowerCase();
   const tipo = document.getElementById("modal-tipo").value;
   const f = detalleActual.filter(r =>
-    (!busq || (r.item_codigo + " " + (r.tarea || "")).toLowerCase().includes(busq)) &&
+    (!busq || (r.item_codigo+" "+(r.tarea||"")).toLowerCase().includes(busq)) &&
     (!tipo || r.tipo === tipo)
   );
   document.getElementById("modal-count").textContent = f.length + " de " + detalleActual.length + " lineas";
@@ -333,16 +348,13 @@ function renderDetalle() {
   document.getElementById("modal-body").innerHTML = f.map(r => `
     <tr>
       <td><strong>${r.item_codigo}</strong></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-          title="${r.tarea||""}">${r.tarea||"—"}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.tarea||""}">${r.tarea||"—"}</td>
       <td><span class="badge ${r.tipo==="OPEX"?"badge-ok":"badge-warn"}">${r.tipo||"—"}</span></td>
-      <td>${r.provincia||"—"}</td>
-      <td>${r.unidad_medida||"—"}</td>
+      <td>${r.provincia||"—"}</td><td>${r.unidad_medida||"—"}</td>
       <td>${Number(r.cantidades||0).toLocaleString("es-AR")}</td>
       <td style="text-align:right">${formatMonto(r.precio_unitario)}</td>
       <td style="text-align:right;font-weight:500">${formatMonto(r.total_mes)}</td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-          title="${r.observaciones||""}">${r.observaciones||"—"}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.observaciones||""}">${r.observaciones||"—"}</td>
     </tr>
   `).join("");
 }
