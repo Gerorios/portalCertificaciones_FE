@@ -214,9 +214,9 @@ function verificarPendientes(resumen) {
     return;
   }
 
-  // Primer mes cargado
-  const [primerAnio, primerMes] = periodosEnBD[0].split("-").map(Number);
-  const primerMesNum = primerAnio * 12 + (primerMes - 1);
+  const INICIO_REVISION = 2025 * 12 + 0; // Enero 2025
+const [primerAnio, primerMes] = periodosEnBD[0].split("-").map(Number);
+const primerMesNum = Math.max(primerAnio * 12 + (primerMes - 1), INICIO_REVISION);
 
   // Set de combinaciones ya cargadas
   const cargados = new Set(resumen.map(r => r.periodo + "__" + r.contrato));
