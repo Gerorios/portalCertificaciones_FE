@@ -143,14 +143,13 @@
 
 <!-- Modal certificaciones pendientes -->
 <div class="modal-bg" id="modal-pendientes" style="z-index:300">
-  <div class="modal" style="max-width:500px;text-align:center">
+  <div class="modal" style="max-width:520px;text-align:center">
     <div style="font-size:52px;margin-bottom:.75rem">⚠️</div>
     <h2 style="margin-bottom:.5rem;font-size:18px">Certificaciones pendientes</h2>
     <p style="color:var(--gris-texto);font-size:13px;margin-bottom:1rem">
-      Todavia no cargaste las certificaciones de
-      <strong id="pendientes-periodo"></strong> para los siguientes contratos:
+      Los siguientes periodos tienen contratos sin certificacion cargada:
     </p>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1rem"
+    <div style="width:100%;margin-bottom:1rem;max-height:260px;overflow-y:auto"
          id="pendientes-lista"></div>
     <p style="font-size:12px;color:var(--gris-texto);margin-bottom:1.5rem;padding:.75rem;background:var(--amarillo-light);border-radius:8px">
       Recorda que la fecha limite de carga es el dia 10 de cada mes.
@@ -193,30 +192,74 @@ async function cargarDatos() {
   } catch (err) { console.error(err); }
 }
 
-// ── Alerta pendientes ─────────────────────────────────────────
+// ── Alerta pendientes historicos ──────────────────────────────
 function verificarPendientes(resumen) {
   if (!user || user.rol === "admin") return;
 
-  const hoy = new Date();
-  if (hoy.getDate() < 10) return;
-
-  const mesActual = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0");
+  const hoy              = new Date();
   const contratosUsuario = user.contratos || [];
+  if (!contratosUsuario.length) return;
 
-  const cargadosEsteMes = new Set(
-    resumen.filter(r => r.periodo === mesActual).map(r => r.contrato)
-  );
+  // Calcular mes actual como numero
+  const mesActualNum = hoy.getFullYear() * 12 + hoy.getMonth();
 
-  const pendientes = contratosUsuario.filter(k => !cargadosEsteMes.has(k));
-  if (!pendientes.length) return;
+  // Buscar el primer periodo cargado en la BD para este usuario
+  const periodosEnBD = [...new Set(resumen.map(r => r.periodo))].sort();
 
-  const [anio, mes] = mesActual.split("-");
-  document.getElementById("pendientes-periodo").textContent =
-    MESES[parseInt(mes)] + " " + anio;
-  document.getElementById("pendientes-lista").innerHTML =
-    pendientes.map(k =>
-      `<span class="badge badge-warn" style="font-size:13px;padding:5px 14px">${k}</span>`
-    ).join("");
+  // Si no hay nada cargado, solo alertar mes actual si es dia 10+
+  if (!periodosEnBD.length) {
+    if (hoy.getDate() < 10) return;
+    const periodo = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0");
+    mostrarModalPendientes([{ periodo, contratos: contratosUsuario }]);
+    return;
+  }
+
+  // Primer mes cargado
+  const [primerAnio, primerMes] = periodosEnBD[0].split("-").map(Number);
+  const primerMesNum = primerAnio * 12 + (primerMes - 1);
+
+  // Set de combinaciones ya cargadas
+  const cargados = new Set(resumen.map(r => r.periodo + "__" + r.contrato));
+
+  const faltantes = [];
+
+  for (let m = primerMesNum; m <= mesActualNum; m++) {
+    const anio    = Math.floor(m / 12);
+    const mes     = (m % 12) + 1;
+    const periodo = anio + "-" + String(mes).padStart(2, "0");
+
+    // Mes actual: solo alertar si es dia 10 o mas
+    if (m === mesActualNum && hoy.getDate() < 10) continue;
+
+    const contratosFaltantes = contratosUsuario.filter(k => !cargados.has(periodo + "__" + k));
+    if (contratosFaltantes.length > 0) {
+      faltantes.push({ periodo, contratos: contratosFaltantes });
+    }
+  }
+
+  if (faltantes.length > 0) {
+    mostrarModalPendientes(faltantes);
+  }
+}
+
+function mostrarModalPendientes(faltantes) {
+  document.getElementById("pendientes-lista").innerHTML = faltantes.map(f => {
+    const [a, m] = f.periodo.split("-");
+    const esPasado = f.periodo < (new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0"));
+    return `
+      <div style="text-align:left;padding:8px 12px;background:${esPasado ? 'var(--rojo-light)' : 'var(--amarillo-light)'};
+                  border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <span style="font-size:13px;font-weight:500">${MESES[parseInt(m)]} ${a}</span>
+          ${esPasado ? '<span style="font-size:11px;color:var(--rojo);margin-left:6px">vencido</span>' : '<span style="font-size:11px;color:var(--amarillo);margin-left:6px">pendiente</span>'}
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+          ${f.contratos.map(k => `<span class="badge ${esPasado ? 'badge-err' : 'badge-warn'}">${k}</span>`).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+
   document.getElementById("modal-pendientes").classList.add("open");
 }
 
