@@ -10,6 +10,7 @@ function renderSidebar(paginaActiva) {
     { id: "upload",    icon: "📤", label: "Subir certificación",href: "upload.html" },
     { id: "historial", icon: "🗂️", label: "Historial",          href: "historial.html" },
     { id: "admin",     icon: "⚙️", label: "Administración",     href: "admin.html", adminOnly: true },
+    { id: "items", icon: "📋", label: "Maestro de ítems", href: "items.html", adminOnly: true },
   ];
 
   const items = nav
