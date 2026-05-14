@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../css/styles.css">
   <style>
     .fila-clickable { cursor: pointer; }
-    .fila-clickable:hover td { background: var(--verde-light) !important; }
+    .fila-clickable:hover td { background: var(--primario-light) !important; }
     .modal-bg {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,.45); z-index: 200;
@@ -52,17 +52,20 @@
       <a href="upload.html" class="btn btn-primary">+ Nueva certificacion</a>
     </div>
 
+    <!-- Métricas reactivas al filtro -->
     <div class="metrics-grid" id="metrics"></div>
 
+    <!-- Tabla resumen con filtros -->
     <div class="card" style="margin-bottom:1.25rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
         <h2>Total facturado por periodo</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="filtro-anio"     style="width:auto"><option value="">Todos los anos</option></select>
-          <select id="filtro-mes"      style="width:auto"><option value="">Todos los meses</option></select>
-          <select id="filtro-contrato" style="width:auto"><option value="">Todos los contratos</option></select>
+          <select id="filtro-anio"     style="width:auto" onchange="aplicarFiltros()"><option value="">Todos los años</option></select>
+          <select id="filtro-mes"      style="width:auto" onchange="aplicarFiltros()"><option value="">Todos los meses</option></select>
+          <select id="filtro-contrato" style="width:auto" onchange="aplicarFiltros()"><option value="">Todos los contratos</option></select>
         </div>
       </div>
+
       <div class="tabla-wrap">
         <table>
           <thead>
@@ -77,8 +80,18 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Paginación -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
+        <span id="pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" id="btn-prev" onclick="cambiarPagina(-1)">← Anterior</button>
+          <button class="btn btn-sm" id="btn-next" onclick="cambiarPagina(1)">Siguiente →</button>
+        </div>
+      </div>
     </div>
 
+    <!-- Historial reciente -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <h2>Ultimas certificaciones cargadas</h2>
@@ -87,10 +100,7 @@
       <div class="tabla-wrap">
         <table>
           <thead>
-            <tr>
-              <th>Archivo</th><th>Contrato</th><th>Periodo</th>
-              <th>Lineas</th><th>Estado</th><th>Fecha carga</th>
-            </tr>
+            <tr><th>Archivo</th><th>Contrato</th><th>Periodo</th><th>Lineas</th><th>Estado</th><th>Fecha carga</th></tr>
           </thead>
           <tbody id="body-historial">
             <tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr>
@@ -105,10 +115,7 @@
 <div class="modal-bg" id="modal-bg">
   <div class="modal">
     <div class="modal-header">
-      <div>
-        <h2 id="modal-titulo">Detalle</h2>
-        <p id="modal-sub"></p>
-      </div>
+      <div><h2 id="modal-titulo">Detalle</h2><p id="modal-sub"></p></div>
       <button class="btn-cerrar" onclick="cerrarModal()">x</button>
     </div>
     <div class="modal-metrics" id="modal-metrics"></div>
@@ -127,8 +134,7 @@
             <th>Item</th><th>Tarea</th><th>Tipo</th><th>Provincia</th>
             <th>UM</th><th>Cantidad</th>
             <th style="text-align:right">$ Unit.</th>
-            <th style="text-align:right">$ Total</th>
-            <th>Obs.</th>
+            <th style="text-align:right">$ Total</th><th>Obs.</th>
           </tr>
         </thead>
         <tbody id="modal-body"></tbody>
@@ -141,7 +147,7 @@
   </div>
 </div>
 
-<!-- Modal certificaciones pendientes -->
+<!-- Modal pendientes -->
 <div class="modal-bg" id="modal-pendientes" style="z-index:300">
   <div class="modal" style="max-width:520px;text-align:center">
     <div style="font-size:52px;margin-bottom:.75rem">⚠️</div>
@@ -149,8 +155,7 @@
     <p style="color:var(--gris-texto);font-size:13px;margin-bottom:1rem">
       Los siguientes periodos tienen contratos sin certificacion cargada:
     </p>
-    <div style="width:100%;margin-bottom:1rem;max-height:260px;overflow-y:auto"
-         id="pendientes-lista"></div>
+    <div style="width:100%;margin-bottom:1rem;max-height:260px;overflow-y:auto" id="pendientes-lista"></div>
     <p style="font-size:12px;color:var(--gris-texto);margin-bottom:1.5rem;padding:.75rem;background:var(--amarillo-light);border-radius:8px">
       Recorda que la fecha limite de carga es el dia 10 de cada mes.
     </p>
@@ -167,15 +172,22 @@
 Auth.requireLogin();
 renderSidebar("dashboard");
 
+// Redirigir gerente a analytics
+const userRol = Auth.getUser()?.rol;
+if (userRol === "gerente") window.location.href = "analytics.html";
+
 const MESES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const POR_PAGINA = 15;
 
 const user = Auth.getUser();
 document.getElementById("titulo-page").textContent =
   "Dashboard - " + (user.rol === "admin" ? "Administrador" : (user.contratos || []).join(" - "));
 
 let datosResumen  = [];
+let datosFiltrados = [];
 let detalleActual = [];
+let paginaActual  = 1;
 
 async function cargarDatos() {
   try {
@@ -185,89 +197,12 @@ async function cargarDatos() {
     ]);
     datosResumen = agruparResumen(resumen);
     poblarFiltros(datosResumen);
-    renderResumen();
-    renderMetricas(datosResumen);
+    aplicarFiltros();
     renderHistorial(historial.slice(0, 8));
     verificarPendientes(resumen);
   } catch (err) { console.error(err); }
 }
 
-// ── Alerta pendientes historicos ──────────────────────────────
-function verificarPendientes(resumen) {
-  if (!user || user.rol === "admin") return;
-
-  const hoy              = new Date();
-  const contratosUsuario = user.contratos || [];
-  if (!contratosUsuario.length) return;
-
-  // Calcular mes actual como numero
-  const mesActualNum = hoy.getFullYear() * 12 + hoy.getMonth();
-
-  // Buscar el primer periodo cargado en la BD para este usuario
-  const periodosEnBD = [...new Set(resumen.map(r => r.periodo))].sort();
-
-  // Si no hay nada cargado, solo alertar mes actual si es dia 10+
-  if (!periodosEnBD.length) {
-    if (hoy.getDate() < 10) return;
-    const periodo = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0");
-    mostrarModalPendientes([{ periodo, contratos: contratosUsuario }]);
-    return;
-  }
-
-  const INICIO_REVISION = 2025 * 12 + 0; // Enero 2025
-const [primerAnio, primerMes] = periodosEnBD[0].split("-").map(Number);
-const primerMesNum = Math.max(primerAnio * 12 + (primerMes - 1), INICIO_REVISION);
-
-  // Set de combinaciones ya cargadas
-  const cargados = new Set(resumen.map(r => r.periodo + "__" + r.contrato));
-
-  const faltantes = [];
-
-  for (let m = primerMesNum; m <= mesActualNum; m++) {
-    const anio    = Math.floor(m / 12);
-    const mes     = (m % 12) + 1;
-    const periodo = anio + "-" + String(mes).padStart(2, "0");
-
-    // Mes actual: solo alertar si es dia 10 o mas
-    if (m === mesActualNum && hoy.getDate() < 10) continue;
-
-    const contratosFaltantes = contratosUsuario.filter(k => !cargados.has(periodo + "__" + k));
-    if (contratosFaltantes.length > 0) {
-      faltantes.push({ periodo, contratos: contratosFaltantes });
-    }
-  }
-
-  if (faltantes.length > 0) {
-    mostrarModalPendientes(faltantes);
-  }
-}
-
-function mostrarModalPendientes(faltantes) {
-  document.getElementById("pendientes-lista").innerHTML = faltantes.map(f => {
-    const [a, m] = f.periodo.split("-");
-    const esPasado = f.periodo < (new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0"));
-    return `
-      <div style="text-align:left;padding:8px 12px;background:${esPasado ? 'var(--rojo-light)' : 'var(--amarillo-light)'};
-                  border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <span style="font-size:13px;font-weight:500">${MESES[parseInt(m)]} ${a}</span>
-          ${esPasado ? '<span style="font-size:11px;color:var(--rojo);margin-left:6px">vencido</span>' : '<span style="font-size:11px;color:var(--amarillo);margin-left:6px">pendiente</span>'}
-        </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
-          ${f.contratos.map(k => `<span class="badge ${esPasado ? 'badge-err' : 'badge-warn'}">${k}</span>`).join("")}
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  document.getElementById("modal-pendientes").classList.add("open");
-}
-
-function cerrarModalPendientes() {
-  document.getElementById("modal-pendientes").classList.remove("open");
-}
-
-// ── Resumen ───────────────────────────────────────────────────
 function agruparResumen(datos) {
   const mapa = {};
   datos.forEach(r => {
@@ -290,44 +225,81 @@ function poblarFiltros(datos) {
   contratos.forEach(k=> document.getElementById("filtro-contrato").appendChild(new Option(k, k)));
 }
 
-function filtrar() {
+function aplicarFiltros() {
   const mes  = document.getElementById("filtro-mes").value;
   const anio = document.getElementById("filtro-anio").value;
   const k    = document.getElementById("filtro-contrato").value;
-  return datosResumen.filter(r => {
+
+  datosFiltrados = datosResumen.filter(r => {
     const [ra, rm] = r.periodo.split("-");
     return (!mes || rm === mes) && (!anio || ra === anio) && (!k || r.contrato === k);
   });
+
+  paginaActual = 1;
+  renderMetricas(datosFiltrados);
+  renderResumen();
 }
 
-function renderResumen() {
-  const datos = filtrar();
-  if (!datos.length) {
-    document.getElementById("body-resumen").innerHTML =
-      '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
-    return;
-  }
-  document.getElementById("body-resumen").innerHTML = datos.map(r => `
-    <tr class="fila-clickable" onclick="abrirDetalle('${r.periodo}','${r.contrato}')">
-      <td>${r.periodo}</td>
-      <td><span class="badge badge-info">${r.contrato}</span></td>
-      <td>${Number(r.lineas).toLocaleString("es-AR")}</td>
-      <td style="text-align:right;font-weight:500">${formatMonto(r.monto_total)}</td>
-      <td style="text-align:center;color:var(--verde);font-size:13px">Ver detalle</td>
-    </tr>
-  `).join("");
-}
-
+// ── Métricas reactivas al filtro ──────────────────────────────
 function renderMetricas(datos) {
   const totalMonto  = datos.reduce((s, r) => s + r.monto_total, 0);
   const totalLineas = datos.reduce((s, r) => s + r.lineas, 0);
   const periodos    = [...new Set(datos.map(r => r.periodo))].sort();
   const ultimo      = periodos[periodos.length - 1] || "—";
+
   document.getElementById("metrics").innerHTML = `
-    <div class="metric"><div class="metric-label">Total facturado historico</div><div class="metric-val verde">${formatMonto(totalMonto)}</div></div>
-    <div class="metric"><div class="metric-label">Lineas certificadas</div><div class="metric-val">${totalLineas.toLocaleString("es-AR")}</div></div>
-    <div class="metric"><div class="metric-label">Ultimo periodo cargado</div><div class="metric-val">${ultimo}</div></div>
+    <div class="metric">
+      <div class="metric-label">Total facturado</div>
+      <div class="metric-val dorado">${formatMonto(totalMonto)}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Lineas certificadas</div>
+      <div class="metric-val">${totalLineas.toLocaleString("es-AR")}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Periodos en vista</div>
+      <div class="metric-val">${periodos.length}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Ultimo periodo</div>
+      <div class="metric-val" style="font-size:18px">${ultimo}</div>
+    </div>
   `;
+}
+
+// ── Tabla con paginación ──────────────────────────────────────
+function renderResumen() {
+  const total     = datosFiltrados.length;
+  const totalPags = Math.ceil(total / POR_PAGINA) || 1;
+  const inicio    = (paginaActual - 1) * POR_PAGINA;
+  const pagina    = datosFiltrados.slice(inicio, inicio + POR_PAGINA);
+
+  document.getElementById("pag-info").textContent =
+    total ? `Mostrando ${inicio+1}–${Math.min(inicio+POR_PAGINA, total)} de ${total} registros` : "";
+  document.getElementById("btn-prev").disabled = paginaActual <= 1;
+  document.getElementById("btn-next").disabled = paginaActual >= totalPags;
+
+  if (!pagina.length) {
+    document.getElementById("body-resumen").innerHTML =
+      '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin datos para los filtros seleccionados</td></tr>';
+    return;
+  }
+
+  document.getElementById("body-resumen").innerHTML = pagina.map(r => `
+    <tr class="fila-clickable" onclick="abrirDetalle('${r.periodo}','${r.contrato}')">
+      <td>${r.periodo}</td>
+      <td><span class="badge badge-info">${r.contrato}</span></td>
+      <td>${Number(r.lineas).toLocaleString("es-AR")}</td>
+      <td style="text-align:right;font-weight:500">${formatMonto(r.monto_total)}</td>
+      <td style="text-align:center;color:var(--primario);font-size:13px">Ver detalle</td>
+    </tr>
+  `).join("");
+}
+
+function cambiarPagina(dir) {
+  paginaActual += dir;
+  renderResumen();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function renderHistorial(datos) {
@@ -364,7 +336,7 @@ async function abrirDetalle(periodo, contrato) {
     const capex = detalleActual.filter(r=>r.tipo==="CAPEX").reduce((s,r)=>s+Number(r.total_mes||0),0);
     document.getElementById("modal-sub").textContent = detalleActual.length + " lineas";
     document.getElementById("modal-metrics").innerHTML = `
-      <div class="modal-metric"><div class="modal-metric-label">Total certificado</div><div class="modal-metric-val" style="color:var(--verde)">${formatMonto(total)}</div></div>
+      <div class="modal-metric"><div class="modal-metric-label">Total certificado</div><div class="modal-metric-val" style="color:var(--primario)">${formatMonto(total)}</div></div>
       <div class="modal-metric"><div class="modal-metric-label">OPEX</div><div class="modal-metric-val">${formatMonto(opex)}</div></div>
       <div class="modal-metric"><div class="modal-metric-label">CAPEX</div><div class="modal-metric-val">${formatMonto(capex)}</div></div>
     `;
@@ -407,14 +379,51 @@ function cerrarModal() {
   detalleActual = [];
 }
 
+// ── Pendientes ────────────────────────────────────────────────
+function verificarPendientes(resumen) {
+  if (!user || user.rol === "admin") return;
+  const hoy = new Date();
+  const contratosUsuario = user.contratos || [];
+  if (!contratosUsuario.length) return;
+  const mesActualNum = hoy.getFullYear() * 12 + hoy.getMonth();
+  const periodosEnBD = [...new Set(resumen.map(r => r.periodo))].sort();
+  if (!periodosEnBD.length) { if (hoy.getDate() < 10) return; }
+  const INICIO = 2025 * 12 + 0;
+  const primerMesNum = periodosEnBD.length
+    ? Math.max(INICIO, (() => { const [a,m] = periodosEnBD[0].split("-").map(Number); return a*12+(m-1); })())
+    : mesActualNum;
+  const cargados = new Set(resumen.map(r => r.periodo + "__" + r.contrato));
+  const faltantes = [];
+  for (let m = primerMesNum; m <= mesActualNum; m++) {
+    const anio = Math.floor(m / 12);
+    const mes  = (m % 12) + 1;
+    const periodo = anio + "-" + String(mes).padStart(2, "0");
+    if (m === mesActualNum && hoy.getDate() < 10) continue;
+    const cf = contratosUsuario.filter(k => !cargados.has(periodo + "__" + k));
+    if (cf.length) faltantes.push({ periodo, contratos: cf });
+  }
+  if (!faltantes.length) return;
+  document.getElementById("pendientes-lista").innerHTML = faltantes.map(f => {
+    const [a, m] = f.periodo.split("-");
+    const esPasado = f.periodo < (new Date().getFullYear() + "-" + String(new Date().getMonth()+1).padStart(2,"0"));
+    return `<div style="text-align:left;padding:8px 12px;background:${esPasado?"var(--rojo-light)":"var(--amarillo-light)"};border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <div><span style="font-size:13px;font-weight:500">${MESES[parseInt(m)]} ${a}</span>
+      <span style="font-size:11px;color:${esPasado?"var(--rojo)":"var(--amarillo)"};margin-left:6px">${esPasado?"vencido":"pendiente"}</span></div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${f.contratos.map(k=>`<span class="badge ${esPasado?"badge-err":"badge-warn"}">${k}</span>`).join("")}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("modal-pendientes").classList.add("open");
+}
+
+function cerrarModalPendientes() {
+  document.getElementById("modal-pendientes").classList.remove("open");
+}
+
 document.getElementById("modal-bg").addEventListener("click", e => {
   if (e.target === document.getElementById("modal-bg")) cerrarModal();
 });
 document.getElementById("modal-buscar").addEventListener("input", renderDetalle);
 document.getElementById("modal-tipo").addEventListener("change", renderDetalle);
-["filtro-mes","filtro-anio","filtro-contrato"].forEach(id =>
-  document.getElementById(id).addEventListener("change", renderResumen)
-);
 
 cargarDatos();
 </script>
