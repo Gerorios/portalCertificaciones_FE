@@ -90,9 +90,10 @@
     </div>
     <div class="form-group">
       <label>Rol</label>
-      <select id="m-rol" onchange="toggleContratos()">
-        <option value="jefe">Jefe de contrato</option>
-        <option value="admin">Administrador</option>
+     <select id="m-rol" onchange="toggleContratos()">
+  <option value="jefe">Jefe de contrato</option>
+  <option value="gerente">Gerente</option>
+  <option value="admin">Administrador</option>
       </select>
     </div>
     <div class="form-group" id="grupo-contratos">
@@ -201,8 +202,9 @@ function cerrarModal() {
 }
 
 function toggleContratos() {
-  const esAdmin = document.getElementById("m-rol").value === "admin";
-  document.getElementById("grupo-contratos").style.display = esAdmin ? "none" : "block";
+  const rol = document.getElementById("m-rol").value;
+  document.getElementById("grupo-contratos").style.display = 
+    (rol === "admin" || rol === "gerente") ? "none" : "block";
 }
 
 async function guardarUsuario() {
