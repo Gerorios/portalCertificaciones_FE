@@ -6,11 +6,11 @@ function renderSidebar(paginaActiva) {
   if (!user) return;
 
   const nav = [
-    { id: "dashboard", icon: "📊", label: "Dashboard",         href: "dashboard.html" },
-    { id: "upload",    icon: "📤", label: "Subir certificación",href: "upload.html" },
-    { id: "historial", icon: "🗂️", label: "Historial",          href: "historial.html" },
-    { id: "admin",     icon: "⚙️", label: "Administración",     href: "admin.html", adminOnly: true },
-    { id: "items", icon: "📋", label: "Maestro de ítems", href: "items.html", adminOnly: true },
+    { id: "dashboard", icon: "📊", label: "Dashboard",          href: "dashboard.html" },
+    { id: "upload",    icon: "📤", label: "Subir certificación", href: "upload.html" },
+    { id: "historial", icon: "🗂️",  label: "Historial",           href: "historial.html" },
+    { id: "items",     icon: "📋", label: "Maestro de ítems",    href: "items.html",     adminOnly: true },
+    { id: "admin",     icon: "⚙️",  label: "Administración",      href: "admin.html",     adminOnly: true },
   ];
 
   const items = nav
@@ -27,19 +27,25 @@ function renderSidebar(paginaActiva) {
   document.getElementById("sidebar-mount").innerHTML = `
     <aside class="sidebar">
       <div class="sidebar-logo">
-        Serytec
-        <span>Certificaciones Naturgy</span>
+        <img src="../img/logo.png" alt="Serytec logo"
+             onerror="this.style.display='none'">
+        <div class="sidebar-logo-text">
+          Serytec
+          <span>Certificaciones Naturgy</span>
+        </div>
       </div>
+
       <nav class="sidebar-nav">${items}</nav>
+
       <div class="sidebar-footer">
         <div class="user-info">
           <div class="avatar ${user.rol === "admin" ? "admin" : ""}">${iniciales}</div>
           <div>
-            <div style="font-weight:500;color:var(--negro)">${user.nombre}</div>
-            <div style="font-size:11px">${user.rol === "admin" ? "Administrador" : user.contratos?.join(", ") || ""}</div>
+            <div class="user-name">${user.nombre}</div>
+            <div class="user-role">${user.rol === "admin" ? "Administrador" : (user.contratos || []).join(", ")}</div>
           </div>
         </div>
-        <button class="btn btn-sm" style="width:100%" onclick="logout()">Cerrar sesión</button>
+        <button class="btn btn-sm" onclick="logout()">Cerrar sesión</button>
       </div>
     </aside>
   `;
