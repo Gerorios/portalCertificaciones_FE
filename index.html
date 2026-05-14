@@ -6,72 +6,167 @@
   <title>Serytec — Ingresar</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
+      min-height: 100vh;
       display: flex;
+      background: var(--secundario);
+      font-family: var(--font);
+    }
+
+    /* Panel izquierdo — branding */
+    .login-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      background: var(--secundario);
+      position: relative;
+      overflow: hidden;
+      padding: 3rem 2rem;
     }
-    .login-box { width: 100%; max-width: 380px; padding: 1rem; }
-    .login-logo {
-      text-align: center;
-      margin-bottom: 2rem;
+
+    .logo-bg {
+      position: absolute;
+      width: 75%;
+      max-width: 420px;
+      opacity: .07;
+      pointer-events: none;
+      user-select: none;
     }
-    .login-logo img {
-      width: 80px;
-      height: 80px;
+
+    .logo-small {
+      width: 72px;
+      height: 72px;
       object-fit: contain;
-      margin-bottom: .75rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 4px 16px rgba(220,160,40,.3));
     }
-    .login-logo h1 {
+
+    .brand-title {
+      font-size: 52px;
+      font-weight: 800;
       color: var(--primario);
-      font-size: 26px;
-      letter-spacing: .5px;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      line-height: 1;
     }
-    .login-logo p {
-      color: rgba(255,255,255,.5);
+
+    .brand-line {
+      width: 48px;
+      height: 3px;
+      background: var(--primario);
+      border-radius: 2px;
+      margin: 1.25rem auto 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-sub {
       font-size: 13px;
-      margin-top: 4px;
+      color: rgba(255,255,255,.45);
+      margin-top: 1rem;
+      text-align: center;
+      letter-spacing: .5px;
+      position: relative;
+      z-index: 1;
+      max-width: 280px;
+      line-height: 1.6;
     }
-    .login-card {
+
+    /* Panel derecho — formulario */
+    .login-right {
+      width: 420px;
+      min-height: 100vh;
       background: var(--blanco);
-      border-radius: var(--radio);
-      padding: 1.75rem;
-      box-shadow: 0 8px 32px rgba(0,0,0,.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2.5rem;
+      box-shadow: -8px 0 32px rgba(0,0,0,.2);
     }
+
+    .login-right h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--secundario);
+      margin-bottom: .25rem;
+      width: 100%;
+    }
+
+    .login-welcome {
+      font-size: 13px;
+      color: var(--gris-texto);
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    .login-form { width: 100%; }
+
     .btn-login {
       width: 100%;
-      padding: 10px;
+      padding: 11px;
       background: var(--primario);
       color: var(--secundario);
       border: none;
       border-radius: 8px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: background .15s;
+      transition: background .15s, transform .1s;
+      letter-spacing: .5px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
     }
-    .btn-login:hover { background: var(--primario-dark); color: var(--blanco); }
-    .btn-login:disabled { opacity: .6; cursor: not-allowed; }
-    #alerta { min-height: 20px; }
+    .btn-login:hover { background: var(--primario-dark); color: var(--blanco); transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .login-footer {
+      margin-top: 2rem;
+      font-size: 11px;
+      color: var(--gris-texto);
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      body { flex-direction: column; }
+      .login-left { min-height: 220px; flex: none; padding: 2rem 1rem; }
+      .brand-title { font-size: 36px; }
+      .login-right { width: 100%; min-height: auto; padding: 2rem 1.5rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <div class="login-logo">
-      <img src="img/LogoST.png" alt="Serytec"
-           onerror="this.style.display='none'">
-      <h1>Serytec</h1>
-      <p>Sistema de certificaciones Naturgy</p>
-    </div>
 
-    <div class="login-card">
-      <div id="alerta"></div>
+  <!-- Panel izquierdo: branding -->
+  <div class="login-left">
+    <img src="img/LogoST.png" alt="" class="logo-bg" aria-hidden="true"
+         onerror="this.style.display='none'">
+    <img src="img/LogoST.png" alt="Serytec" class="logo-small"
+         onerror="this.style.display='none'">
+    <div class="brand-title">SER&amp;TEC</div>
+    <div class="brand-line"></div>
+    <div class="brand-sub">
+      Sistema de carga de certificaciones<br>Ser&amp;Tec
+    </div>
+  </div>
+
+  <!-- Panel derecho: formulario -->
+  <div class="login-right">
+    <h2>Bienvenido</h2>
+    <p class="login-welcome">Ingresá tus credenciales para continuar</p>
+
+    <div class="login-form">
+      <div id="alerta" style="margin-bottom:.75rem"></div>
 
       <div class="form-group">
         <label for="email">Correo electrónico</label>
@@ -80,16 +175,18 @@
                autocomplete="email">
       </div>
 
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:1.5rem">
         <label for="password">Contraseña</label>
         <input type="password" id="password"
                placeholder="••••••••"
                autocomplete="current-password">
       </div>
 
-      <button class="btn-login" id="btn-login">
-        Ingresar
-      </button>
+      <button class="btn-login" id="btn-login">Ingresar</button>
+    </div>
+
+    <div class="login-footer">
+      Serytec · Sistema de certificaciones Naturgy
     </div>
   </div>
 
@@ -110,7 +207,7 @@
       }
 
       btnLogin.disabled = true;
-      btnLogin.innerHTML = '<span class="spinner" style="border-top-color:var(--secundario)"></span> Ingresando...';
+      btnLogin.innerHTML = '<span class="spinner" style="border-top-color:var(--secundario);width:16px;height:16px;border-width:2px"></span> Ingresando...';
       clearAlert(alerta);
 
       try {
