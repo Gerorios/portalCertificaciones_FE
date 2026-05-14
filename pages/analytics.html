@@ -21,23 +21,15 @@
       box-shadow: var(--sombra);
     }
     .chart-card.full { grid-column: 1 / -1; }
-    .chart-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: .25rem;
-      color: var(--negro);
-    }
-    .chart-sub {
-      font-size: 12px;
-      color: var(--gris-texto);
-      margin-bottom: 1rem;
-    }
-    .chart-wrap { position: relative; height: 280px; }
-    .chart-wrap.tall { height: 340px; }
+    .chart-title { font-size: 14px; font-weight: 600; margin-bottom: .25rem; }
+    .chart-sub   { font-size: 12px; color: var(--gris-texto); margin-bottom: 1rem; }
+    .chart-wrap  { position: relative; height: 300px; }
+    .chart-wrap.tall { height: 360px; }
 
+    /* KPIs */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
       margin-bottom: 1.25rem;
     }
@@ -45,30 +37,41 @@
       background: var(--blanco);
       border: 1px solid var(--gris-borde);
       border-radius: var(--radio);
-      padding: 1rem 1.25rem;
+      padding: 1.25rem 1.5rem;
       box-shadow: var(--sombra);
-      border-left: 3px solid var(--primario);
+      border-left: 4px solid var(--primario);
     }
-    .kpi-label { font-size: 11px; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-    .kpi-val   { font-size: 26px; font-weight: 700; color: var(--negro); }
-    .kpi-val.dorado { color: var(--primario); }
+    .kpi-label { font-size: 11px; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .kpi-val   { font-size: 30px; font-weight: 700; color: var(--primario); }
     .kpi-badge {
-      display: inline-block; font-size: 11px; font-weight: 500;
-      padding: 2px 7px; border-radius: 20px; margin-top: 4px;
+      display: inline-block; font-size: 12px; font-weight: 500;
+      padding: 3px 9px; border-radius: 20px; margin-top: 6px;
     }
     .kpi-badge.up   { background: #D1FAE5; color: #065F46; }
     .kpi-badge.down { background: var(--rojo-light); color: var(--rojo); }
     .kpi-badge.flat { background: var(--gris-bg); color: var(--gris-texto); }
 
-    .tabla-top { font-size: 12px; }
-    .tabla-top th { font-size: 11px; }
-    .tabla-top td { padding: 6px 10px; }
-
-    .filtro-bar {
-      display: flex; gap: 8px; flex-wrap: wrap;
-      margin-bottom: 1.25rem; align-items: center;
+    /* Filtro de rango */
+    .filtro-rango {
+      background: var(--blanco);
+      border: 1px solid var(--gris-borde);
+      border-radius: var(--radio);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--sombra);
+      margin-bottom: 1.25rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
     }
-    .filtro-bar label { margin: 0; display: inline; }
+    .filtro-rango .filtro-grupo { display: flex; flex-direction: column; gap: 4px; }
+    .filtro-rango label { font-size: 11px; font-weight: 500; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .3px; margin: 0; }
+    .filtro-rango select { width: auto; }
+    .filtro-sep { font-size: 18px; color: var(--gris-texto); padding-bottom: 4px; }
+
+    /* Tabla */
+    .tabla-top th { font-size: 11px; }
+    .tabla-top td { padding: 6px 10px; font-size: 12px; }
 
     @media (max-width: 800px) {
       .charts-grid { grid-template-columns: 1fr; }
@@ -84,15 +87,30 @@
     <div class="page-header">
       <div>
         <div class="page-title">Analytics — Vista Gerencial</div>
-        <div class="page-sub">Análisis histórico de certificaciones Naturgy</div>
+        <div class="page-sub">Análisis de certificaciones Naturgy</div>
       </div>
-      <div class="filtro-bar">
-        <select id="filtro-anios" onchange="recargar()" style="width:auto">
-          <option value="1">Último año</option>
-          <option value="2" selected>Últimos 2 años</option>
-          <option value="3">Últimos 3 años</option>
-        </select>
+    </div>
+
+    <!-- Filtro de rango de fechas -->
+    <div class="filtro-rango">
+      <div class="filtro-grupo">
+        <label>Desde</label>
+        <div style="display:flex;gap:6px">
+          <select id="desde-mes" style="width:auto"></select>
+          <select id="desde-anio" style="width:auto"></select>
+        </div>
       </div>
+      <div class="filtro-sep">→</div>
+      <div class="filtro-grupo">
+        <label>Hasta</label>
+        <div style="display:flex;gap:6px">
+          <select id="hasta-mes" style="width:auto"></select>
+          <select id="hasta-anio" style="width:auto"></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="aplicar()">Aplicar filtro</button>
+      <button class="btn" onclick="resetFiltros()">Restablecer</button>
+      <span id="rango-info" style="font-size:12px;color:var(--gris-texto);padding-bottom:4px"></span>
     </div>
 
     <!-- KPIs -->
@@ -100,58 +118,37 @@
       <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
     </div>
 
-    <!-- Gráficos fila 1 -->
-    <div class="charts-grid">
-      <div class="chart-card full">
-        <div class="chart-title">Evolución mensual del total certificado</div>
-        <div class="chart-sub">Total facturado acumulado mes a mes</div>
-        <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
-      </div>
+    <!-- Gráfico línea — evolución mensual -->
+    <div class="chart-card full" style="margin-bottom:1.25rem">
+      <div class="chart-title">Evolución mensual del total certificado</div>
+      <div class="chart-sub" id="linea-sub">Total facturado mes a mes en el rango seleccionado</div>
+      <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
     </div>
 
-    <!-- Gráficos fila 2 -->
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-title">Certificado por contrato y período</div>
-        <div class="chart-sub">Comparación entre contratos K</div>
-        <div class="chart-wrap"><canvas id="chart-barras"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Distribución OPEX vs CAPEX</div>
-        <div class="chart-sub">Participación histórica por tipo</div>
-        <div class="chart-wrap"><canvas id="chart-dona"></canvas></div>
-      </div>
+    <!-- Gráfico barras — por contrato -->
+    <div class="chart-card full" style="margin-bottom:1.25rem">
+      <div class="chart-title">Certificado por contrato y período</div>
+      <div class="chart-sub">Comparación entre contratos K en el rango seleccionado</div>
+      <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
     </div>
 
-    <!-- Gráficos fila 3 -->
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-title">Certificado por provincia</div>
-        <div class="chart-sub">Distribución geográfica histórica</div>
-        <div class="chart-wrap"><canvas id="chart-provincia"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Top 10 ítems por monto certificado</div>
-        <div class="chart-sub">Ítems con mayor facturación histórica</div>
-        <div class="chart-wrap"><canvas id="chart-items"></canvas></div>
-      </div>
+    <!-- Top ítems -->
+    <div class="chart-card full" style="margin-bottom:1.25rem">
+      <div class="chart-title">Top 10 ítems por monto certificado</div>
+      <div class="chart-sub">Ítems con mayor facturación en el período seleccionado</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
     </div>
 
-    <!-- Tabla certificaciones -->
+    <!-- Tabla con paginación -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div>
           <h2>Detalle de certificaciones</h2>
           <div style="font-size:12px;color:var(--gris-texto)" id="tabla-info"></div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="filtro-k-tabla" style="width:auto" onchange="filtrarTabla()">
-            <option value="">Todos los contratos</option>
-          </select>
-          <select id="filtro-mes-tabla" style="width:auto" onchange="filtrarTabla()">
-            <option value="">Todos los meses</option>
-          </select>
-        </div>
+        <select id="filtro-k-tabla" style="width:auto" onchange="filtrarTabla()">
+          <option value="">Todos los contratos</option>
+        </select>
       </div>
       <div class="tabla-wrap">
         <table class="tabla-top">
@@ -164,9 +161,8 @@
           <tbody id="body-tabla"></tbody>
         </table>
       </div>
-      <!-- Paginación -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
-        <span id="pagina-info" style="font-size:12px;color:var(--gris-texto)"></span>
+        <span id="pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
         <div style="display:flex;gap:8px">
           <button class="btn btn-sm" id="btn-prev" onclick="cambiarPagina(-1)">← Anterior</button>
           <button class="btn btn-sm" id="btn-next" onclick="cambiarPagina(1)">Siguiente →</button>
@@ -182,92 +178,138 @@
 Auth.requireLogin();
 renderSidebar("analytics");
 
-// Colores de la paleta Serytec
-const COLORES = [
-  "#DCA028","#4A4A4A","#E8831A","#787878","#F0C060",
-  "#2563EB","#059669","#DC2626","#7C3AED","#0891B2"
-];
-const MESES = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const MESES_CORTO = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const MESES_FULL  = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Jul","Ago","Sep","Oct","Nov","Dic"];
+const COLORES = ["#DCA028","#4A4A4A","#E8831A","#787878","#F0C060","#2563EB","#059669","#DC2626","#7C3AED","#0891B2"];
 
-let charts = {};
+let charts      = {};
 let resumenData = [];
 let paginaActual = 1;
 const POR_PAGINA = 15;
 
-// ── Inicialización ────────────────────────────────────────────
-async function init() {
+// ── Poblar selectores de fecha ────────────────────────────────
+function poblarFiltrosFecha() {
+  const hoy   = new Date();
+  const anioH = hoy.getFullYear();
+  const mesH  = hoy.getMonth() + 1;
+
+  ["desde-mes","hasta-mes"].forEach(id => {
+    const sel = document.getElementById(id);
+    for (let m = 1; m <= 12; m++) {
+      sel.appendChild(new Option(MESES_FULL[m], String(m).padStart(2,"0")));
+    }
+  });
+
+  ["desde-anio","hasta-anio"].forEach(id => {
+    const sel = document.getElementById(id);
+    for (let a = anioH; a >= 2025; a--) sel.appendChild(new Option(a, a));
+  });
+
+  // Defaults: desde enero del año actual hasta hoy
+  document.getElementById("desde-mes").value  = "01";
+  document.getElementById("desde-anio").value = anioH;
+  document.getElementById("hasta-mes").value  = String(mesH).padStart(2,"0");
+  document.getElementById("hasta-anio").value = anioH;
+}
+
+function getRango() {
+  const desdeM = document.getElementById("desde-mes").value;
+  const desdeA = document.getElementById("desde-anio").value;
+  const hastaM = document.getElementById("hasta-mes").value;
+  const hastaA = document.getElementById("hasta-anio").value;
+  return {
+    desde: `${desdeA}-${desdeM}`,
+    hasta: `${hastaA}-${hastaM}`,
+  };
+}
+
+function resetFiltros() {
+  const hoy = new Date();
+  document.getElementById("desde-mes").value  = "01";
+  document.getElementById("desde-anio").value = hoy.getFullYear();
+  document.getElementById("hasta-mes").value  = String(hoy.getMonth()+1).padStart(2,"0");
+  document.getElementById("hasta-anio").value = hoy.getFullYear();
+  aplicar();
+}
+
+function aplicar() {
+  const { desde, hasta } = getRango();
+  if (desde > hasta) {
+    alert("El rango 'desde' no puede ser mayor que 'hasta'");
+    return;
+  }
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+  cargarDatos(desde, hasta);
+}
+
+// ── Carga de datos ────────────────────────────────────────────
+async function cargarDatos(desde, hasta) {
   try {
-    const anios = document.getElementById("filtro-anios").value;
-    const [kpis, linea, barras, dona, provincias, topItems, resumen] = await Promise.all([
-      get("/analytics/kpis"),
-      get(`/analytics/evolucion-mensual?anios=${anios}`),
-      get(`/analytics/por-contrato-mes?anios=${anios}`),
-      get("/analytics/opex-capex"),
-      get("/analytics/por-provincia"),
-      get("/analytics/top-items?limite=10"),
+    const [resumen, linea, barras, topItems] = await Promise.all([
       get("/certificaciones/resumen"),
+      get(`/analytics/evolucion-mensual?desde=${desde}&hasta=${hasta}`),
+      get(`/analytics/por-contrato-mes?desde=${desde}&hasta=${hasta}`),
+      get(`/analytics/top-items?desde=${desde}&hasta=${hasta}&limite=10`),
     ]);
 
-    renderKPIs(kpis);
+    // Filtrar resumen por rango
+    resumenData = resumen.filter(r => r.periodo >= desde && r.periodo <= hasta);
+
+    renderKPIs(resumenData, desde, hasta);
     renderLineaChart(linea);
     renderBarrasChart(barras);
-    renderDonaChart(dona);
-    renderProvinciaChart(provincias);
     renderItemsChart(topItems);
-
-    // Tabla con paginación
-    resumenData = resumen;
-    poblarFiltrosTabla(resumen);
+    poblarFiltroContrato(resumenData);
+    paginaActual = 1;
     filtrarTabla();
+
+    const [dA, dM] = desde.split("-");
+    const [hA, hM] = hasta.split("-");
+    document.getElementById("rango-info").textContent =
+      `${MESES_FULL[parseInt(dM)]} ${dA} → ${MESES_FULL[parseInt(hM)]} ${hA}`;
 
   } catch (err) { console.error(err); }
 }
 
-async function recargar() {
-  // Destruir charts existentes
-  Object.values(charts).forEach(c => c.destroy());
-  charts = {};
-  init();
-}
+// ── KPIs dinámicos ────────────────────────────────────────────
+function renderKPIs(datos, desde, hasta) {
+  const totalMonto = datos.reduce((s, r) => s + Number(r.monto_total || 0), 0);
 
-// ── KPIs ──────────────────────────────────────────────────────
-function renderKPIs(k) {
-  const varClass = k.variacion_pct > 0 ? "up" : k.variacion_pct < 0 ? "down" : "flat";
-  const varIcon  = k.variacion_pct > 0 ? "▲" : k.variacion_pct < 0 ? "▼" : "—";
+  // Variación: comparar primer vs último mes del rango
+  const porMes = {};
+  datos.forEach(r => {
+    porMes[r.periodo] = (porMes[r.periodo] || 0) + Number(r.monto_total || 0);
+  });
+  const periodos = Object.keys(porMes).sort();
+  let variacion = 0;
+  if (periodos.length >= 2) {
+    const ultimo     = porMes[periodos[periodos.length - 1]];
+    const penultimo  = porMes[periodos[periodos.length - 2]];
+    if (penultimo > 0) variacion = ((ultimo - penultimo) / penultimo * 100).toFixed(1);
+  }
+
+  const varClass = variacion > 0 ? "up" : variacion < 0 ? "down" : "flat";
+  const varIcon  = variacion > 0 ? "▲" : variacion < 0 ? "▼" : "—";
 
   document.getElementById("kpis").innerHTML = `
     <div class="kpi">
-      <div class="kpi-label">Total facturado histórico</div>
-      <div class="kpi-val dorado">${formatMonto(k.total_monto)}</div>
+      <div class="kpi-label">Total facturado en el período</div>
+      <div class="kpi-val">${formatMonto(totalMonto)}</div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">Líneas certificadas</div>
-      <div class="kpi-val">${Number(k.total_lineas).toLocaleString("es-AR")}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Mes actual</div>
-      <div class="kpi-val">${formatMonto(k.monto_mes_actual)}</div>
-      <span class="kpi-badge ${varClass}">${varIcon} ${Math.abs(k.variacion_pct)}% vs mes anterior</span>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Contratos activos (3m)</div>
-      <div class="kpi-val">${k.contratos_activos}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Último período cargado</div>
-      <div class="kpi-val" style="font-size:18px">${k.ultimo_periodo}</div>
+    <div class="kpi" style="border-left-color:var(--secundario)">
+      <div class="kpi-label">Variación último mes del rango</div>
+      <div class="kpi-val" style="color:var(--secundario);font-size:24px">${Math.abs(variacion)}%</div>
+      <span class="kpi-badge ${varClass}">${varIcon} vs mes anterior</span>
     </div>
   `;
 }
 
 // ── Gráfico de línea ──────────────────────────────────────────
 function renderLineaChart(datos) {
-  const ctx = document.getElementById("chart-linea").getContext("2d");
-  const labels = datos.map(d => {
-    const [a, m] = d.periodo.split("-");
-    return MESES[parseInt(m)] + " " + a;
-  });
-  const valores = datos.map(d => Number(d.monto_total));
+  const ctx    = document.getElementById("chart-linea").getContext("2d");
+  const labels = datos.map(d => { const [a,m] = d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
+  const vals   = datos.map(d => Number(d.monto_total));
 
   charts.linea = new Chart(ctx, {
     type: "line",
@@ -275,11 +317,11 @@ function renderLineaChart(datos) {
       labels,
       datasets: [{
         label: "Total certificado",
-        data: valores,
+        data: vals,
         borderColor: "#DCA028",
         backgroundColor: "rgba(220,160,40,.08)",
         borderWidth: 2.5,
-        pointRadius: 4,
+        pointRadius: 5,
         pointBackgroundColor: "#DCA028",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
@@ -288,214 +330,98 @@ function renderLineaChart(datos) {
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => " " + formatMonto(ctx.raw)
-          }
-        }
+        tooltip: { callbacks: { label: c => " " + formatMonto(c.raw) } }
       },
       scales: {
         y: {
           beginAtZero: true,
-          ticks: {
-            callback: v => "$" + (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : (v/1e3).toFixed(0)+"K"),
-            font: { size: 11 }
-          },
+          ticks: { callback: v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"), font:{size:11} },
           grid: { color: "rgba(0,0,0,.05)" }
         },
-        x: {
-          ticks: { font: { size: 11 }, maxRotation: 45 },
-          grid: { display: false }
-        }
+        x: { ticks: { font:{size:11}, maxRotation:45 }, grid:{display:false} }
       }
     }
   });
 }
 
-// ── Gráfico de barras agrupadas ───────────────────────────────
+// ── Gráfico de barras ─────────────────────────────────────────
 function renderBarrasChart(datos) {
-  const ctx = document.getElementById("chart-barras").getContext("2d");
-
+  const ctx       = document.getElementById("chart-barras").getContext("2d");
   const periodos  = [...new Set(datos.map(d => d.periodo))].sort();
   const contratos = [...new Set(datos.map(d => d.contrato))].sort();
-
-  const labels = periodos.map(p => {
-    const [a, m] = p.split("-");
-    return MESES[parseInt(m)] + " " + a.slice(2);
-  });
+  const labels    = periodos.map(p => { const [a,m]=p.split("-"); return MESES_CORTO[parseInt(m)]+" "+a.slice(2); });
 
   const datasets = contratos.map((k, i) => ({
     label: k,
-    data: periodos.map(p => {
-      const row = datos.find(d => d.periodo === p && d.contrato === k);
-      return row ? Number(row.monto_total) : 0;
-    }),
+    data: periodos.map(p => { const r = datos.find(d => d.periodo===p && d.contrato===k); return r ? Number(r.monto_total) : 0; }),
     backgroundColor: COLORES[i % COLORES.length] + "CC",
     borderColor:     COLORES[i % COLORES.length],
-    borderWidth: 1,
-    borderRadius: 4,
+    borderWidth: 1, borderRadius: 4,
   }));
 
   charts.barras = new Chart(ctx, {
     type: "bar",
     data: { labels, datasets },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position: "top", labels: { font: { size: 11 }, boxWidth: 12 } },
-        tooltip: {
-          callbacks: { label: ctx => " " + ctx.dataset.label + ": " + formatMonto(ctx.raw) }
-        }
+        legend: { position:"top", labels:{ font:{size:11}, boxWidth:12 } },
+        tooltip: { callbacks: { label: c => " "+c.dataset.label+": "+formatMonto(c.raw) } }
       },
       scales: {
         y: {
           beginAtZero: true,
-          ticks: {
-            callback: v => "$" + (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : (v/1e3).toFixed(0)+"K"),
-            font: { size: 11 }
-          },
+          ticks: { callback: v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"), font:{size:11} },
           grid: { color: "rgba(0,0,0,.05)" }
         },
-        x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false } }
+        x: { ticks:{font:{size:10}, maxRotation:45}, grid:{display:false} }
       }
     }
   });
 }
 
-// ── Gráfico de dona ───────────────────────────────────────────
-function renderDonaChart(datos) {
-  const ctx = document.getElementById("chart-dona").getContext("2d");
-
-  charts.dona = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: datos.map(d => d.tipo),
-      datasets: [{
-        data: datos.map(d => Number(d.monto_total)),
-        backgroundColor: ["#DCA028", "#4A4A4A"],
-        borderColor: ["#fff","#fff"],
-        borderWidth: 3,
-        hoverOffset: 8,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: "65%",
-      plugins: {
-        legend: { position: "bottom", labels: { font: { size: 12 }, boxWidth: 14 } },
-        tooltip: {
-          callbacks: {
-            label: ctx => " " + ctx.label + ": " + formatMonto(ctx.raw) +
-              " (" + (ctx.raw / ctx.dataset.data.reduce((a,b)=>a+b,0) * 100).toFixed(1) + "%)"
-          }
-        }
-      }
-    }
-  });
-}
-
-// ── Gráfico de barras horizontales — provincias ───────────────
-function renderProvinciaChart(datos) {
-  const ctx = document.getElementById("chart-provincia").getContext("2d");
-
-  charts.provincia = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: datos.map(d => d.provincia),
-      datasets: [{
-        label: "Total certificado",
-        data: datos.map(d => Number(d.monto_total)),
-        backgroundColor: datos.map((_, i) => COLORES[i % COLORES.length] + "CC"),
-        borderColor:     datos.map((_, i) => COLORES[i % COLORES.length]),
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => " " + formatMonto(ctx.raw) } }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: {
-            callback: v => "$" + (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : (v/1e3).toFixed(0)+"K"),
-            font: { size: 11 }
-          },
-          grid: { color: "rgba(0,0,0,.05)" }
-        },
-        y: { ticks: { font: { size: 12 } }, grid: { display: false } }
-      }
-    }
-  });
-}
-
-// ── Gráfico top ítems ─────────────────────────────────────────
+// ── Top ítems ─────────────────────────────────────────────────
 function renderItemsChart(datos) {
   const ctx = document.getElementById("chart-items").getContext("2d");
-
   charts.items = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: datos.map(d => d.item_codigo + " (" + d.contrato + ")"),
+      labels: datos.map(d => d.item_codigo+" ("+d.contrato+")"),
       datasets: [{
         label: "Total certificado",
         data: datos.map(d => Number(d.monto_total)),
-        backgroundColor: "#DCA028CC",
-        borderColor: "#DCA028",
-        borderWidth: 1,
-        borderRadius: 4,
+        backgroundColor: "#DCA028CC", borderColor: "#DCA028",
+        borderWidth: 1, borderRadius: 4,
       }]
     },
     options: {
       indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => " " + formatMonto(ctx.raw),
-            afterLabel: ctx => " " + (datos[ctx.dataIndex].tarea || "")
-          }
-        }
+        tooltip: { callbacks: { label: c => " "+formatMonto(c.raw), afterLabel: c => " "+(datos[c.dataIndex].tarea||"") } }
       },
       scales: {
         x: {
           beginAtZero: true,
-          ticks: {
-            callback: v => "$" + (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : (v/1e3).toFixed(0)+"K"),
-            font: { size: 11 }
-          },
+          ticks: { callback: v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"), font:{size:11} },
           grid: { color: "rgba(0,0,0,.05)" }
         },
-        y: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        y: { ticks:{font:{size:11}}, grid:{display:false} }
       }
     }
   });
 }
 
 // ── Tabla con paginación ──────────────────────────────────────
-function poblarFiltrosTabla(datos) {
-  const MESES_FULL = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
-                      "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+function poblarFiltroContrato(datos) {
+  const sel = document.getElementById("filtro-k-tabla");
+  sel.innerHTML = '<option value="">Todos los contratos</option>';
   const contratos = [...new Set(datos.map(r => r.contrato))].sort();
-  const meses     = [...new Set(datos.map(r => r.periodo.split("-")[1]))].sort();
-
-  const selK = document.getElementById("filtro-k-tabla");
-  const selM = document.getElementById("filtro-mes-tabla");
-  contratos.forEach(k => selK.appendChild(new Option(k, k)));
-  meses.forEach(m => selM.appendChild(new Option(MESES_FULL[parseInt(m)], m)));
+  contratos.forEach(k => sel.appendChild(new Option(k, k)));
 }
 
 function filtrarTabla() {
@@ -504,32 +430,26 @@ function filtrarTabla() {
 }
 
 function renderTabla() {
-  const k   = document.getElementById("filtro-k-tabla").value;
-  const mes = document.getElementById("filtro-mes-tabla").value;
-
-  // Agrupar OPEX+CAPEX
+  const k = document.getElementById("filtro-k-tabla").value;
   const mapa = {};
   resumenData.forEach(r => {
     if (k && r.contrato !== k) return;
-    if (mes && r.periodo.split("-")[1] !== mes) return;
-    const key = r.periodo + "__" + r.contrato;
-    if (!mapa[key]) mapa[key] = { periodo: r.periodo, contrato: r.contrato, lineas: 0, monto_total: 0, tipos: [] };
-    mapa[key].lineas      += Number(r.lineas || 0);
-    mapa[key].monto_total += Number(r.monto_total || 0);
+    const key = r.periodo+"__"+r.contrato;
+    if (!mapa[key]) mapa[key] = { periodo:r.periodo, contrato:r.contrato, lineas:0, monto_total:0, tipos:[] };
+    mapa[key].lineas      += Number(r.lineas||0);
+    mapa[key].monto_total += Number(r.monto_total||0);
     if (r.tipo) mapa[key].tipos.push(r.tipo);
   });
 
-  const datos = Object.values(mapa).sort((a,b) => b.periodo.localeCompare(a.periodo));
-  const total = datos.length;
-  const inicio = (paginaActual - 1) * POR_PAGINA;
-  const pagina = datos.slice(inicio, inicio + POR_PAGINA);
-  const totalPags = Math.ceil(total / POR_PAGINA);
+  const datos    = Object.values(mapa).sort((a,b) => b.periodo.localeCompare(a.periodo));
+  const total    = datos.length;
+  const totalPags= Math.ceil(total/POR_PAGINA)||1;
+  const inicio   = (paginaActual-1)*POR_PAGINA;
+  const pagina   = datos.slice(inicio, inicio+POR_PAGINA);
 
-  document.getElementById("tabla-info").textContent =
-    total + " registros — página " + paginaActual + " de " + (totalPags || 1);
-  document.getElementById("pagina-info").textContent =
-    "Mostrando " + (inicio + 1) + "–" + Math.min(inicio + POR_PAGINA, total) + " de " + total;
-
+  document.getElementById("tabla-info").textContent = total+" registros";
+  document.getElementById("pag-info").textContent   =
+    total ? `Mostrando ${inicio+1}–${Math.min(inicio+POR_PAGINA,total)} de ${total}` : "";
   document.getElementById("btn-prev").disabled = paginaActual <= 1;
   document.getElementById("btn-next").disabled = paginaActual >= totalPags;
 
@@ -538,12 +458,11 @@ function renderTabla() {
       '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
     return;
   }
-
   document.getElementById("body-tabla").innerHTML = pagina.map(r => `
     <tr>
       <td>${r.periodo}</td>
       <td><span class="badge badge-info">${r.contrato}</span></td>
-      <td>${r.tipos.join(" + ") || "—"}</td>
+      <td>${[...new Set(r.tipos)].join(" + ")||"—"}</td>
       <td>${Number(r.lineas).toLocaleString("es-AR")}</td>
       <td style="text-align:right;font-weight:500">${formatMonto(r.monto_total)}</td>
     </tr>
@@ -553,13 +472,12 @@ function renderTabla() {
 function cambiarPagina(dir) {
   paginaActual += dir;
   renderTabla();
-  window.scrollTo({ top: document.querySelector(".card:last-child").offsetTop - 80, behavior: "smooth" });
 }
 
-document.getElementById("filtro-k-tabla").addEventListener("change", filtrarTabla);
-document.getElementById("filtro-mes-tabla").addEventListener("change", filtrarTabla);
-
-init();
+// ── Init ──────────────────────────────────────────────────────
+poblarFiltrosFecha();
+const { desde, hasta } = getRango();
+cargarDatos(desde, hasta);
 </script>
 </body>
 </html>
