@@ -7,83 +7,51 @@
   <link rel="stylesheet" href="../css/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
-    .charts-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-      margin-bottom: 1.25rem;
-    }
-    .chart-card {
-      background: var(--blanco);
-      border: 1px solid var(--gris-borde);
-      border-radius: var(--radio);
-      padding: 1.25rem;
-      box-shadow: var(--sombra);
-    }
-    .chart-card.full { grid-column: 1 / -1; }
-    .chart-title { font-size: 14px; font-weight: 600; margin-bottom: .25rem; }
-    .chart-sub   { font-size: 12px; color: var(--gris-texto); margin-bottom: 1rem; }
-    .chart-wrap  { position: relative; height: 300px; }
-    .chart-wrap.tall { height: 360px; }
+    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem; }
+    .chart-card  { background:var(--blanco); border:1px solid var(--gris-borde); border-radius:var(--radio); padding:1.25rem; box-shadow:var(--sombra); }
+    .chart-card.full { grid-column:1/-1; }
+    .chart-title { font-size:14px; font-weight:600; margin-bottom:.25rem; }
+    .chart-sub   { font-size:12px; color:var(--gris-texto); margin-bottom:1rem; }
+    .chart-wrap  { position:relative; height:300px; }
+    .chart-wrap.tall { height:380px; }
 
-    /* KPIs */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-      margin-bottom: 1.25rem;
-    }
-    .kpi {
-      background: var(--blanco);
-      border: 1px solid var(--gris-borde);
-      border-radius: var(--radio);
-      padding: 1.25rem 1.5rem;
-      box-shadow: var(--sombra);
-      border-left: 4px solid var(--primario);
-    }
-    .kpi-label { font-size: 11px; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-    .kpi-val   { font-size: 30px; font-weight: 700; color: var(--primario); }
-    .kpi-badge {
-      display: inline-block; font-size: 12px; font-weight: 500;
-      padding: 3px 9px; border-radius: 20px; margin-top: 6px;
-    }
-    .kpi-badge.up   { background: #D1FAE5; color: #065F46; }
-    .kpi-badge.down { background: var(--rojo-light); color: var(--rojo); }
-    .kpi-badge.flat { background: var(--gris-bg); color: var(--gris-texto); }
+    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:1.25rem; }
+    .kpi { background:var(--blanco); border:1px solid var(--gris-borde); border-radius:var(--radio); padding:1.25rem 1.5rem; box-shadow:var(--sombra); border-left:4px solid var(--primario); }
+    .kpi-label { font-size:11px; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+    .kpi-val   { font-size:28px; font-weight:700; color:var(--primario); }
+    .kpi-badge { display:inline-block; font-size:12px; font-weight:500; padding:3px 9px; border-radius:20px; margin-top:6px; }
+    .kpi-badge.up   { background:#D1FAE5; color:#065F46; }
+    .kpi-badge.down { background:var(--rojo-light); color:var(--rojo); }
+    .kpi-badge.flat { background:var(--gris-bg); color:var(--gris-texto); }
 
-    /* Filtro de rango */
-    .filtro-rango {
-      background: var(--blanco);
-      border: 1px solid var(--gris-borde);
-      border-radius: var(--radio);
-      padding: 1rem 1.25rem;
-      box-shadow: var(--sombra);
-      margin-bottom: 1.25rem;
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-      flex-wrap: wrap;
+    .filtro-bar {
+      background:var(--blanco); border:1px solid var(--gris-borde);
+      border-radius:var(--radio); padding:1rem 1.25rem;
+      box-shadow:var(--sombra); margin-bottom:1.25rem;
+      display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;
     }
-    .filtro-rango .filtro-grupo { display: flex; flex-direction: column; gap: 4px; }
-    .filtro-rango label { font-size: 11px; font-weight: 500; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .3px; margin: 0; }
-    .filtro-rango select { width: auto; }
-    .filtro-sep { font-size: 18px; color: var(--gris-texto); padding-bottom: 4px; }
+    .filtro-grupo { display:flex; flex-direction:column; gap:4px; }
+    .filtro-grupo label { font-size:11px; font-weight:500; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.3px; margin:0; }
+    .filtro-sep { font-size:18px; color:var(--gris-texto); padding-bottom:4px; }
 
-    /* Tabla */
-    .tabla-top th { font-size: 11px; }
-    .tabla-top td { padding: 6px 10px; font-size: 12px; }
+    /* Interanual */
+    .interanual-leyenda {
+      display:flex; gap:1rem; margin-bottom:.75rem; flex-wrap:wrap;
+    }
+    .leyenda-item { display:flex; align-items:center; gap:6px; font-size:12px; }
+    .leyenda-dot  { width:12px; height:12px; border-radius:50%; }
 
-    @media (max-width: 800px) {
-      .charts-grid { grid-template-columns: 1fr; }
-      .chart-card.full { grid-column: 1; }
+    @media (max-width:800px) {
+      .charts-grid { grid-template-columns:1fr; }
+      .chart-card.full { grid-column:1; }
     }
   </style>
 </head>
 <body>
 <div class="layout">
   <div id="sidebar-mount"></div>
-
   <main class="main-content">
+
     <div class="page-header">
       <div>
         <div class="page-title">Analytics — Vista Gerencial</div>
@@ -91,8 +59,14 @@
       </div>
     </div>
 
-    <!-- Filtro de rango de fechas -->
-    <div class="filtro-rango">
+    <!-- Filtros -->
+    <div class="filtro-bar">
+      <div class="filtro-grupo">
+        <label>Contrato</label>
+        <select id="filtro-contrato" style="width:auto" onchange="aplicar()">
+          <option value="">Todos</option>
+        </select>
+      </div>
       <div class="filtro-grupo">
         <label>Desde</label>
         <div style="display:flex;gap:6px">
@@ -108,7 +82,7 @@
           <select id="hasta-anio" style="width:auto"></select>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="aplicar()">Aplicar filtro</button>
+      <button class="btn btn-primary" onclick="aplicar()">Aplicar</button>
       <button class="btn" onclick="resetFiltros()">Restablecer</button>
       <span id="rango-info" style="font-size:12px;color:var(--gris-texto);padding-bottom:4px"></span>
     </div>
@@ -118,57 +92,35 @@
       <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
     </div>
 
-    <!-- Gráfico línea — evolución mensual -->
+    <!-- Línea: evolución mensual -->
     <div class="chart-card full" style="margin-bottom:1.25rem">
       <div class="chart-title">Evolución mensual del total certificado</div>
-      <div class="chart-sub" id="linea-sub">Total facturado mes a mes en el rango seleccionado</div>
+      <div class="chart-sub">Total facturado mes a mes en el rango seleccionado</div>
       <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
     </div>
 
-    <!-- Gráfico barras — por contrato -->
+    <!-- Barras: por contrato -->
     <div class="chart-card full" style="margin-bottom:1.25rem">
       <div class="chart-title">Certificado por contrato y período</div>
-      <div class="chart-sub">Comparación entre contratos K en el rango seleccionado</div>
+      <div class="chart-sub">Comparación entre contratos K</div>
       <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
     </div>
 
-    <!-- Top ítems -->
+    <!-- Interanual -->
     <div class="chart-card full" style="margin-bottom:1.25rem">
+      <div class="chart-title">Análisis interanual</div>
+      <div class="chart-sub" id="interanual-sub">Comparación mes a mes: año actual vs año anterior</div>
+      <div class="interanual-leyenda" id="interanual-leyenda"></div>
+      <div class="chart-wrap tall"><canvas id="chart-interanual"></canvas></div>
+    </div>
+
+    <!-- Top ítems -->
+    <div class="chart-card full">
       <div class="chart-title">Top 10 ítems por monto certificado</div>
       <div class="chart-sub">Ítems con mayor facturación en el período seleccionado</div>
       <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
     </div>
 
-    <!-- Tabla con paginación -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <div>
-          <h2>Detalle de certificaciones</h2>
-          <div style="font-size:12px;color:var(--gris-texto)" id="tabla-info"></div>
-        </div>
-        <select id="filtro-k-tabla" style="width:auto" onchange="filtrarTabla()">
-          <option value="">Todos los contratos</option>
-        </select>
-      </div>
-      <div class="tabla-wrap">
-        <table class="tabla-top">
-          <thead>
-            <tr>
-              <th>Período</th><th>Contrato</th><th>Tipo</th>
-              <th>Líneas</th><th style="text-align:right">Total mes</th>
-            </tr>
-          </thead>
-          <tbody id="body-tabla"></tbody>
-        </table>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
-        <span id="pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-sm" id="btn-prev" onclick="cambiarPagina(-1)">← Anterior</button>
-          <button class="btn btn-sm" id="btn-next" onclick="cambiarPagina(1)">Siguiente →</button>
-        </div>
-      </div>
-    </div>
   </main>
 </div>
 
@@ -179,15 +131,26 @@ Auth.requireLogin();
 renderSidebar("analytics");
 
 const MESES_CORTO = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-const MESES_FULL  = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Jul","Ago","Sep","Oct","Nov","Dic"];
-const COLORES = ["#DCA028","#4A4A4A","#E8831A","#787878","#F0C060","#2563EB","#059669","#DC2626","#7C3AED","#0891B2"];
+const MESES_FULL  = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const COLORES     = ["#DCA028","#4A4A4A","#E8831A","#787878","#F0C060","#2563EB","#059669","#DC2626","#7C3AED","#0891B2"];
 
-let charts      = {};
-let resumenData = [];
-let paginaActual = 1;
-const POR_PAGINA = 15;
+let charts = {};
 
-// ── Poblar selectores de fecha ────────────────────────────────
+// ── Inicialización ────────────────────────────────────────────
+async function init() {
+  // Cargar contratos disponibles
+  try {
+    const contratos = await get("/analytics/contratos");
+    const sel = document.getElementById("filtro-contrato");
+    contratos.forEach(k => sel.appendChild(new Option(k, k)));
+  } catch(e) { console.error(e); }
+
+  poblarFiltrosFecha();
+  const { desde, hasta } = getRango();
+  await cargarDatos(desde, hasta, "");
+}
+
+// ── Filtros ───────────────────────────────────────────────────
 function poblarFiltrosFecha() {
   const hoy   = new Date();
   const anioH = hoy.getFullYear();
@@ -195,17 +158,14 @@ function poblarFiltrosFecha() {
 
   ["desde-mes","hasta-mes"].forEach(id => {
     const sel = document.getElementById(id);
-    for (let m = 1; m <= 12; m++) {
+    for (let m = 1; m <= 12; m++)
       sel.appendChild(new Option(MESES_FULL[m], String(m).padStart(2,"0")));
-    }
   });
-
   ["desde-anio","hasta-anio"].forEach(id => {
     const sel = document.getElementById(id);
-    for (let a = anioH; a >= 2025; a--) sel.appendChild(new Option(a, a));
+    for (let a = anioH; a >= 2025; a--)
+      sel.appendChild(new Option(a, a));
   });
-
-  // Defaults: desde enero del año actual hasta hoy
   document.getElementById("desde-mes").value  = "01";
   document.getElementById("desde-anio").value = anioH;
   document.getElementById("hasta-mes").value  = String(mesH).padStart(2,"0");
@@ -213,14 +173,14 @@ function poblarFiltrosFecha() {
 }
 
 function getRango() {
-  const desdeM = document.getElementById("desde-mes").value;
-  const desdeA = document.getElementById("desde-anio").value;
-  const hastaM = document.getElementById("hasta-mes").value;
-  const hastaA = document.getElementById("hasta-anio").value;
   return {
-    desde: `${desdeA}-${desdeM}`,
-    hasta: `${hastaA}-${hastaM}`,
+    desde: `${document.getElementById("desde-anio").value}-${document.getElementById("desde-mes").value}`,
+    hasta: `${document.getElementById("hasta-anio").value}-${document.getElementById("hasta-mes").value}`,
   };
+}
+
+function getContrato() {
+  return document.getElementById("filtro-contrato").value;
 }
 
 function resetFiltros() {
@@ -229,155 +189,205 @@ function resetFiltros() {
   document.getElementById("desde-anio").value = hoy.getFullYear();
   document.getElementById("hasta-mes").value  = String(hoy.getMonth()+1).padStart(2,"0");
   document.getElementById("hasta-anio").value = hoy.getFullYear();
+  document.getElementById("filtro-contrato").value = "";
   aplicar();
 }
 
-function aplicar() {
+async function aplicar() {
   const { desde, hasta } = getRango();
-  if (desde > hasta) {
-    alert("El rango 'desde' no puede ser mayor que 'hasta'");
-    return;
-  }
+  if (desde > hasta) { alert("El rango 'desde' no puede ser mayor que 'hasta'"); return; }
   Object.values(charts).forEach(c => c.destroy());
   charts = {};
-  cargarDatos(desde, hasta);
+  await cargarDatos(desde, hasta, getContrato());
 }
 
 // ── Carga de datos ────────────────────────────────────────────
-async function cargarDatos(desde, hasta) {
+async function cargarDatos(desde, hasta, contrato) {
+  const q = new URLSearchParams();
+  if (desde)    q.set("desde", desde);
+  if (hasta)    q.set("hasta", hasta);
+  if (contrato) q.set("contrato", contrato);
+  const qs = q.toString() ? "?" + q.toString() : "";
+
   try {
-    const [resumen, linea, barras, topItems] = await Promise.all([
-      get("/certificaciones/resumen"),
-      get(`/analytics/evolucion-mensual?desde=${desde}&hasta=${hasta}`),
-      get(`/analytics/por-contrato-mes?desde=${desde}&hasta=${hasta}`),
-      get(`/analytics/top-items?desde=${desde}&hasta=${hasta}&limite=10`),
+    const [linea, barras, topItems, interanualData] = await Promise.all([
+      get(`/analytics/evolucion-mensual${qs}`),
+      get(`/analytics/por-contrato-mes${qs}`),
+      get(`/analytics/top-items${qs}&limite=10`),
+      get(`/analytics/interanual${contrato ? "?contrato="+contrato : ""}`),
     ]);
 
-    // Filtrar resumen por rango
-    resumenData = resumen.filter(r => r.periodo >= desde && r.periodo <= hasta);
-
-    renderKPIs(resumenData, desde, hasta);
+    renderKPIs(linea, desde, hasta);
     renderLineaChart(linea);
     renderBarrasChart(barras);
+    renderInteranualChart(interanualData);
     renderItemsChart(topItems);
-    poblarFiltroContrato(resumenData);
-    paginaActual = 1;
-    filtrarTabla();
 
-    const [dA, dM] = desde.split("-");
-    const [hA, hM] = hasta.split("-");
+    const [dA,dM] = desde.split("-");
+    const [hA,hM] = hasta.split("-");
     document.getElementById("rango-info").textContent =
-      `${MESES_FULL[parseInt(dM)]} ${dA} → ${MESES_FULL[parseInt(hM)]} ${hA}`;
+      `${MESES_FULL[parseInt(dM)]} ${dA} → ${MESES_FULL[parseInt(hM)]} ${hA}` +
+      (contrato ? ` · ${contrato}` : "");
 
-  } catch (err) { console.error(err); }
+  } catch(err) { console.error(err); }
 }
 
-// ── KPIs dinámicos ────────────────────────────────────────────
-function renderKPIs(datos, desde, hasta) {
-  const totalMonto = datos.reduce((s, r) => s + Number(r.monto_total || 0), 0);
-
-  // Variación: comparar primer vs último mes del rango
+// ── KPIs ──────────────────────────────────────────────────────
+function renderKPIs(linea, desde, hasta) {
+  const total = linea.reduce((s,d) => s + Number(d.monto_total||0), 0);
   const porMes = {};
-  datos.forEach(r => {
-    porMes[r.periodo] = (porMes[r.periodo] || 0) + Number(r.monto_total || 0);
-  });
+  linea.forEach(d => porMes[d.periodo] = Number(d.monto_total||0));
   const periodos = Object.keys(porMes).sort();
   let variacion = 0;
   if (periodos.length >= 2) {
-    const ultimo     = porMes[periodos[periodos.length - 1]];
-    const penultimo  = porMes[periodos[periodos.length - 2]];
-    if (penultimo > 0) variacion = ((ultimo - penultimo) / penultimo * 100).toFixed(1);
+    const ult  = porMes[periodos[periodos.length-1]];
+    const prev = porMes[periodos[periodos.length-2]];
+    if (prev > 0) variacion = ((ult - prev) / prev * 100).toFixed(1);
   }
-
   const varClass = variacion > 0 ? "up" : variacion < 0 ? "down" : "flat";
   const varIcon  = variacion > 0 ? "▲" : variacion < 0 ? "▼" : "—";
 
   document.getElementById("kpis").innerHTML = `
     <div class="kpi">
       <div class="kpi-label">Total facturado en el período</div>
-      <div class="kpi-val">${formatMonto(totalMonto)}</div>
+      <div class="kpi-val">${formatMonto(total)}</div>
     </div>
     <div class="kpi" style="border-left-color:var(--secundario)">
       <div class="kpi-label">Variación último mes del rango</div>
-      <div class="kpi-val" style="color:var(--secundario);font-size:24px">${Math.abs(variacion)}%</div>
+      <div class="kpi-val" style="color:var(--secundario);font-size:22px">${Math.abs(variacion)}%</div>
       <span class="kpi-badge ${varClass}">${varIcon} vs mes anterior</span>
     </div>
   `;
 }
 
-// ── Gráfico de línea ──────────────────────────────────────────
+// ── Línea ─────────────────────────────────────────────────────
 function renderLineaChart(datos) {
   const ctx    = document.getElementById("chart-linea").getContext("2d");
-  const labels = datos.map(d => { const [a,m] = d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
+  const labels = datos.map(d => { const[a,m]=d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
   const vals   = datos.map(d => Number(d.monto_total));
-
   charts.linea = new Chart(ctx, {
     type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Total certificado",
-        data: vals,
-        borderColor: "#DCA028",
-        backgroundColor: "rgba(220,160,40,.08)",
-        borderWidth: 2.5,
-        pointRadius: 5,
-        pointBackgroundColor: "#DCA028",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        tension: .35,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => " " + formatMonto(c.raw) } }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { callback: v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"), font:{size:11} },
-          grid: { color: "rgba(0,0,0,.05)" }
-        },
-        x: { ticks: { font:{size:11}, maxRotation:45 }, grid:{display:false} }
+    data: { labels, datasets:[{ label:"Total", data:vals,
+      borderColor:"#DCA028", backgroundColor:"rgba(220,160,40,.08)",
+      borderWidth:2.5, pointRadius:5, pointBackgroundColor:"#DCA028",
+      pointBorderColor:"#fff", pointBorderWidth:2, tension:.35, fill:true }]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>" "+formatMonto(c.raw)}} },
+      scales:{
+        y:{ beginAtZero:true, ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"} },
+        x:{ ticks:{font:{size:11},maxRotation:45}, grid:{display:false} }
       }
     }
   });
 }
 
-// ── Gráfico de barras ─────────────────────────────────────────
+// ── Barras por contrato ───────────────────────────────────────
 function renderBarrasChart(datos) {
   const ctx       = document.getElementById("chart-barras").getContext("2d");
-  const periodos  = [...new Set(datos.map(d => d.periodo))].sort();
-  const contratos = [...new Set(datos.map(d => d.contrato))].sort();
-  const labels    = periodos.map(p => { const [a,m]=p.split("-"); return MESES_CORTO[parseInt(m)]+" "+a.slice(2); });
-
-  const datasets = contratos.map((k, i) => ({
+  const periodos  = [...new Set(datos.map(d=>d.periodo))].sort();
+  const contratos = [...new Set(datos.map(d=>d.contrato))].sort();
+  const labels    = periodos.map(p=>{ const[a,m]=p.split("-"); return MESES_CORTO[parseInt(m)]+" "+a.slice(2); });
+  const datasets  = contratos.map((k,i) => ({
     label: k,
-    data: periodos.map(p => { const r = datos.find(d => d.periodo===p && d.contrato===k); return r ? Number(r.monto_total) : 0; }),
-    backgroundColor: COLORES[i % COLORES.length] + "CC",
-    borderColor:     COLORES[i % COLORES.length],
-    borderWidth: 1, borderRadius: 4,
+    data: periodos.map(p=>{ const r=datos.find(d=>d.periodo===p&&d.contrato===k); return r?Number(r.monto_total):0; }),
+    backgroundColor: COLORES[i%COLORES.length]+"CC",
+    borderColor: COLORES[i%COLORES.length],
+    borderWidth:1, borderRadius:4,
   }));
-
   charts.barras = new Chart(ctx, {
-    type: "bar",
-    data: { labels, datasets },
+    type:"bar", data:{labels,datasets},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:"top",labels:{font:{size:11},boxWidth:12}},
+        tooltip:{callbacks:{label:c=>" "+c.dataset.label+": "+formatMonto(c.raw)}} },
+      scales:{
+        y:{ beginAtZero:true, ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"} },
+        x:{ ticks:{font:{size:10},maxRotation:45}, grid:{display:false} }
+      }
+    }
+  });
+}
+
+// ── Interanual ────────────────────────────────────────────────
+function renderInteranualChart(datos) {
+  if (!datos.length) return;
+
+  const anioActual   = datos[0].anio_actual;
+  const anioAnterior = datos[0].anio_anterior;
+  const labels       = datos.map(d => MESES_CORTO[d.mes]);
+
+  // Actualizar subtítulo y leyenda
+  document.getElementById("interanual-sub").textContent =
+    `Comparación mes a mes: ${anioActual} vs ${anioAnterior}`;
+  document.getElementById("interanual-leyenda").innerHTML = `
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#DCA028"></div>${anioActual}</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#787878;opacity:.6"></div>${anioAnterior}</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#059669"></div>Variación % (eje der.)</div>
+  `;
+
+  const ctx = document.getElementById("chart-interanual").getContext("2d");
+  charts.interanual = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: "bar",
+          label: String(anioActual),
+          data: datos.map(d => d.actual),
+          backgroundColor: "#DCA028CC",
+          borderColor: "#DCA028",
+          borderWidth: 1, borderRadius: 4,
+          yAxisID: "y",
+        },
+        {
+          type: "bar",
+          label: String(anioAnterior),
+          data: datos.map(d => d.anterior),
+          backgroundColor: "#78787866",
+          borderColor: "#787878",
+          borderWidth: 1, borderRadius: 4,
+          yAxisID: "y",
+        },
+        {
+          type: "line",
+          label: "Variación %",
+          data: datos.map(d => d.variacion_pct),
+          borderColor: "#059669",
+          backgroundColor: "transparent",
+          borderWidth: 2,
+          pointRadius: 5,
+          pointBackgroundColor: d => d.raw >= 0 ? "#059669" : "#DC2626",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          tension: .3,
+          yAxisID: "y2",
+        }
+      ]
+    },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position:"top", labels:{ font:{size:11}, boxWidth:12 } },
-        tooltip: { callbacks: { label: c => " "+c.dataset.label+": "+formatMonto(c.raw) } }
+        legend: { position:"top", labels:{font:{size:11},boxWidth:12} },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              if (c.dataset.label === "Variación %") return ` Variación: ${c.raw}%`;
+              return ` ${c.dataset.label}: ${formatMonto(c.raw)}`;
+            }
+          }
+        }
       },
       scales: {
         y: {
           beginAtZero: true,
           ticks: { callback: v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"), font:{size:11} },
-          grid: { color: "rgba(0,0,0,.05)" }
+          grid: { color: "rgba(0,0,0,.05)" },
         },
-        x: { ticks:{font:{size:10}, maxRotation:45}, grid:{display:false} }
+        y2: {
+          position: "right",
+          ticks: { callback: v => v+"%", font:{size:11} },
+          grid: { display: false },
+        },
+        x: { ticks:{font:{size:11}}, grid:{display:false} }
       }
     }
   });
@@ -387,97 +397,24 @@ function renderBarrasChart(datos) {
 function renderItemsChart(datos) {
   const ctx = document.getElementById("chart-items").getContext("2d");
   charts.items = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: datos.map(d => d.item_codigo+" ("+d.contrato+")"),
-      datasets: [{
-        label: "Total certificado",
-        data: datos.map(d => Number(d.monto_total)),
-        backgroundColor: "#DCA028CC", borderColor: "#DCA028",
-        borderWidth: 1, borderRadius: 4,
-      }]
+    type:"bar",
+    data:{
+      labels: datos.map(d=>d.item_codigo+" ("+d.contrato+")"),
+      datasets:[{ label:"Total certificado", data:datos.map(d=>Number(d.monto_total)),
+        backgroundColor:"#DCA028CC", borderColor:"#DCA028", borderWidth:1, borderRadius:4 }]
     },
-    options: {
-      indexAxis: "y",
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => " "+formatMonto(c.raw), afterLabel: c => " "+(datos[c.dataIndex].tarea||"") } }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: { callback: v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"), font:{size:11} },
-          grid: { color: "rgba(0,0,0,.05)" }
-        },
-        y: { ticks:{font:{size:11}}, grid:{display:false} }
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:c=>" "+formatMonto(c.raw), afterLabel:c=>" "+(datos[c.dataIndex].tarea||"")}} },
+      scales:{
+        x:{ beginAtZero:true, ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"} },
+        y:{ ticks:{font:{size:11}}, grid:{display:false} }
       }
     }
   });
 }
 
-// ── Tabla con paginación ──────────────────────────────────────
-function poblarFiltroContrato(datos) {
-  const sel = document.getElementById("filtro-k-tabla");
-  sel.innerHTML = '<option value="">Todos los contratos</option>';
-  const contratos = [...new Set(datos.map(r => r.contrato))].sort();
-  contratos.forEach(k => sel.appendChild(new Option(k, k)));
-}
-
-function filtrarTabla() {
-  paginaActual = 1;
-  renderTabla();
-}
-
-function renderTabla() {
-  const k = document.getElementById("filtro-k-tabla").value;
-  const mapa = {};
-  resumenData.forEach(r => {
-    if (k && r.contrato !== k) return;
-    const key = r.periodo+"__"+r.contrato;
-    if (!mapa[key]) mapa[key] = { periodo:r.periodo, contrato:r.contrato, lineas:0, monto_total:0, tipos:[] };
-    mapa[key].lineas      += Number(r.lineas||0);
-    mapa[key].monto_total += Number(r.monto_total||0);
-    if (r.tipo) mapa[key].tipos.push(r.tipo);
-  });
-
-  const datos    = Object.values(mapa).sort((a,b) => b.periodo.localeCompare(a.periodo));
-  const total    = datos.length;
-  const totalPags= Math.ceil(total/POR_PAGINA)||1;
-  const inicio   = (paginaActual-1)*POR_PAGINA;
-  const pagina   = datos.slice(inicio, inicio+POR_PAGINA);
-
-  document.getElementById("tabla-info").textContent = total+" registros";
-  document.getElementById("pag-info").textContent   =
-    total ? `Mostrando ${inicio+1}–${Math.min(inicio+POR_PAGINA,total)} de ${total}` : "";
-  document.getElementById("btn-prev").disabled = paginaActual <= 1;
-  document.getElementById("btn-next").disabled = paginaActual >= totalPags;
-
-  if (!pagina.length) {
-    document.getElementById("body-tabla").innerHTML =
-      '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
-    return;
-  }
-  document.getElementById("body-tabla").innerHTML = pagina.map(r => `
-    <tr>
-      <td>${r.periodo}</td>
-      <td><span class="badge badge-info">${r.contrato}</span></td>
-      <td>${[...new Set(r.tipos)].join(" + ")||"—"}</td>
-      <td>${Number(r.lineas).toLocaleString("es-AR")}</td>
-      <td style="text-align:right;font-weight:500">${formatMonto(r.monto_total)}</td>
-    </tr>
-  `).join("");
-}
-
-function cambiarPagina(dir) {
-  paginaActual += dir;
-  renderTabla();
-}
-
-// ── Init ──────────────────────────────────────────────────────
-poblarFiltrosFecha();
-const { desde, hasta } = getRango();
-cargarDatos(desde, hasta);
+init();
 </script>
 </body>
 </html>
