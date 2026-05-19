@@ -7,9 +7,7 @@
   <link rel="stylesheet" href="../css/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
-    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem; }
-    .chart-card  { background:var(--blanco); border:1px solid var(--gris-borde); border-radius:var(--radio); padding:1.25rem; box-shadow:var(--sombra); }
-    .chart-card.full { grid-column:1/-1; }
+    .chart-card { background:var(--blanco); border:1px solid var(--gris-borde); border-radius:var(--radio); padding:1.25rem; box-shadow:var(--sombra); margin-bottom:1.25rem; }
     .chart-title { font-size:14px; font-weight:600; margin-bottom:.25rem; }
     .chart-sub   { font-size:12px; color:var(--gris-texto); margin-bottom:1rem; }
     .chart-wrap  { position:relative; height:300px; }
@@ -24,7 +22,8 @@
     .kpi-badge.down { background:var(--rojo-light); color:var(--rojo); }
     .kpi-badge.flat { background:var(--gris-bg); color:var(--gris-texto); }
 
-    .filtro-bar {
+    /* Barra de control superior */
+    .control-bar {
       background:var(--blanco); border:1px solid var(--gris-borde);
       border-radius:var(--radio); padding:1rem 1.25rem;
       box-shadow:var(--sombra); margin-bottom:1.25rem;
@@ -34,28 +33,29 @@
     .filtro-grupo label { font-size:11px; font-weight:500; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.3px; margin:0; }
     .filtro-sep { font-size:18px; color:var(--gris-texto); padding-bottom:4px; }
 
-    /* Toggle PGN / Facturación */
-    .toggle-bar {
-      display:flex; gap:6px; margin-bottom:1rem;
+    /* Toggle global */
+    .toggle-global {
+      display:flex; border:1px solid var(--gris-borde);
+      border-radius:8px; overflow:hidden; margin-left:auto;
     }
-    .toggle-btn {
-      padding:5px 14px; border-radius:20px; font-size:12px; font-weight:500;
-      border:1px solid var(--gris-borde); background:var(--blanco);
-      cursor:pointer; transition:all .15s;
+    .toggle-global button {
+      padding:7px 20px; font-size:13px; font-weight:500;
+      border:none; background:var(--blanco); cursor:pointer;
+      color:var(--gris-texto); transition:all .15s;
     }
-    .toggle-btn.active {
+    .toggle-global button.active {
       background:var(--primario); color:var(--blanco);
-      border-color:var(--primario-dark);
+    }
+    .modo-badge {
+      display:inline-block; font-size:11px; padding:2px 8px;
+      border-radius:20px; background:var(--primario-light);
+      color:var(--primario-dark); font-weight:500; margin-left:6px;
+      vertical-align:middle;
     }
 
     .leyenda-interanual { display:flex; gap:1rem; margin-bottom:.75rem; flex-wrap:wrap; }
     .leyenda-item { display:flex; align-items:center; gap:6px; font-size:12px; }
     .leyenda-dot  { width:12px; height:12px; border-radius:50%; }
-
-    @media (max-width:800px) {
-      .charts-grid { grid-template-columns:1fr; }
-      .chart-card.full { grid-column:1; }
-    }
   </style>
 </head>
 <body>
@@ -65,13 +65,16 @@
 
     <div class="page-header">
       <div>
-        <div class="page-title">Analytics — Vista Gerencial</div>
+        <div class="page-title">
+          Analytics — Vista Gerencial
+          <span class="modo-badge" id="modo-badge">$ Facturación</span>
+        </div>
         <div class="page-sub">Análisis de certificaciones Naturgy</div>
       </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="filtro-bar">
+    <!-- Barra de control: filtros + toggle global -->
+    <div class="control-bar">
       <div class="filtro-grupo">
         <label>Contrato</label>
         <select id="filtro-contrato" style="width:auto">
@@ -95,7 +98,12 @@
       </div>
       <button class="btn btn-primary" onclick="aplicar()">Aplicar</button>
       <button class="btn" onclick="resetFiltros()">Restablecer</button>
-      <span id="rango-info" style="font-size:12px;color:var(--gris-texto);padding-bottom:4px"></span>
+
+      <!-- Toggle global -->
+      <div class="toggle-global">
+        <button id="btn-facturacion" class="active" onclick="setModo('facturacion')">$ Facturación</button>
+        <button id="btn-pgn" onclick="setModo('pgn')">PGN</button>
+      </div>
     </div>
 
     <!-- KPIs -->
@@ -103,44 +111,32 @@
       <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
     </div>
 
-    <!-- Línea -->
-    <div class="chart-card full" style="margin-bottom:1.25rem">
-      <div class="chart-title">Evolución mensual del total certificado</div>
-      <div class="chart-sub">Total facturado mes a mes en el rango seleccionado</div>
+    <!-- Línea: evolución mensual -->
+    <div class="chart-card">
+      <div class="chart-title" id="linea-title">Evolución mensual del total certificado</div>
+      <div class="chart-sub" id="linea-sub">Total facturado mes a mes</div>
       <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
     </div>
 
-    <!-- Barras por contrato -->
-    <div class="chart-card full" style="margin-bottom:1.25rem">
-      <div class="chart-title">Certificado por contrato y período</div>
+    <!-- Barras: por contrato -->
+    <div class="chart-card">
+      <div class="chart-title" id="barras-title">Certificado por contrato y período</div>
       <div class="chart-sub">Comparación entre contratos K</div>
       <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
     </div>
 
     <!-- Interanual -->
-    <div class="chart-card full" style="margin-bottom:1.25rem">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:.5rem">
-        <div>
-          <div class="chart-title">Análisis interanual</div>
-          <div class="chart-sub" id="interanual-sub">Comparación mes a mes: año actual vs año anterior</div>
-        </div>
-        <div class="toggle-bar">
-          <button class="toggle-btn active" id="btn-facturacion" onclick="switchInteranual('facturacion')">
-            $ Facturación
-          </button>
-          <button class="toggle-btn" id="btn-pgn" onclick="switchInteranual('pgn')">
-            PGN
-          </button>
-        </div>
-      </div>
+    <div class="chart-card">
+      <div class="chart-title">Análisis interanual</div>
+      <div class="chart-sub" id="interanual-sub">Comparación mes a mes: año actual vs año anterior</div>
       <div class="leyenda-interanual" id="interanual-leyenda"></div>
       <div class="chart-wrap tall"><canvas id="chart-interanual"></canvas></div>
     </div>
 
     <!-- Top ítems -->
-    <div class="chart-card full">
-      <div class="chart-title">Top 10 ítems por monto certificado</div>
-      <div class="chart-sub">Ítems con mayor facturación en el período seleccionado</div>
+    <div class="chart-card">
+      <div class="chart-title" id="items-title">Top 10 ítems por monto certificado</div>
+      <div class="chart-sub">Ítems con mayor valor en el período seleccionado</div>
       <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
     </div>
 
@@ -157,9 +153,12 @@ const MESES_CORTO = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","O
 const MESES_FULL  = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const COLORES     = ["#DCA028","#4A4A4A","#E8831A","#787878","#F0C060","#2563EB","#059669","#DC2626","#7C3AED","#0891B2"];
 
-let charts         = {};
-let interanualData = null;   // guardamos para el toggle
-let modoInteranual = "facturacion"; // "facturacion" | "pgn"
+let charts        = {};
+let modo          = "facturacion"; // "facturacion" | "pgn"
+let datosLinea    = [];
+let datosBarras   = [];
+let datosItems    = [];
+let datosInteranual = null;
 
 // ── Init ──────────────────────────────────────────────────────
 async function init() {
@@ -168,7 +167,6 @@ async function init() {
     const sel = document.getElementById("filtro-contrato");
     contratos.forEach(k => sel.appendChild(new Option(k, k)));
   } catch(e) {}
-
   poblarFiltrosFecha();
   const { desde, hasta } = getRango();
   await cargarDatos(desde, hasta, "");
@@ -179,7 +177,6 @@ function poblarFiltrosFecha() {
   const hoy = new Date();
   const anioH = hoy.getFullYear();
   const mesH  = hoy.getMonth() + 1;
-
   ["desde-mes","hasta-mes"].forEach(id => {
     const sel = document.getElementById(id);
     for (let m = 1; m <= 12; m++)
@@ -216,20 +213,45 @@ function resetFiltros() {
 async function aplicar() {
   const { desde, hasta } = getRango();
   if (desde > hasta) { alert("El rango 'desde' no puede ser mayor que 'hasta'"); return; }
-  Object.values(charts).forEach(c => c.destroy());
-  charts = {};
+  destruirCharts();
   await cargarDatos(desde, hasta, document.getElementById("filtro-contrato").value);
 }
 
-// ── Carga ─────────────────────────────────────────────────────
+function destruirCharts() {
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+}
+
+// ── Toggle modo global ────────────────────────────────────────
+function setModo(nuevoModo) {
+  modo = nuevoModo;
+  const esPGN = modo === "pgn";
+  document.getElementById("btn-facturacion").classList.toggle("active", !esPGN);
+  document.getElementById("btn-pgn").classList.toggle("active", esPGN);
+  document.getElementById("modo-badge").textContent = esPGN ? "PGN" : "$ Facturación";
+
+  // Actualizar títulos
+  document.getElementById("linea-title").textContent  = esPGN ? "Evolución mensual en PGN" : "Evolución mensual del total certificado";
+  document.getElementById("linea-sub").textContent    = esPGN ? "Puntos Gasnor certificados mes a mes" : "Total facturado mes a mes";
+  document.getElementById("barras-title").textContent = esPGN ? "PGN por contrato y período" : "Certificado por contrato y período";
+  document.getElementById("items-title").textContent  = esPGN ? "Top 10 ítems por PGN" : "Top 10 ítems por monto certificado";
+
+  // Rerenderizar todos los gráficos con los datos ya cargados
+  destruirCharts();
+  renderLineaChart(datosLinea);
+  renderBarrasChart(datosBarras);
+  renderInteranualChart(datosInteranual);
+  renderItemsChart(datosItems);
+}
+
+// ── Carga de datos ────────────────────────────────────────────
 async function cargarDatos(desde, hasta, contrato) {
   const q = new URLSearchParams();
   if (desde)    q.set("desde", desde);
   if (hasta)    q.set("hasta", hasta);
   if (contrato) q.set("contrato", contrato);
-  const qs = q.toString() ? "?" + q.toString() : "";
-
-  const qInt = contrato ? "?contrato=" + contrato : "";
+  const qs  = q.toString() ? "?" + q.toString() : "";
+  const qInt= contrato ? "?contrato=" + contrato : "";
 
   try {
     const [linea, barras, topItems, iData] = await Promise.all([
@@ -239,35 +261,25 @@ async function cargarDatos(desde, hasta, contrato) {
       get(`/analytics/interanual${qInt}`),
     ]);
 
-    interanualData = iData;
+    // Guardar datos para rerenderizar con el toggle
+    datosLinea      = linea;
+    datosBarras     = barras;
+    datosItems      = topItems;
+    datosInteranual = iData;
 
     renderKPIs(linea);
     renderLineaChart(linea);
     renderBarrasChart(barras);
-    renderInteranualChart(iData, modoInteranual);
+    renderInteranualChart(iData);
     renderItemsChart(topItems);
-
-    const [dA,dM] = desde.split("-");
-    const [hA,hM] = hasta.split("-");
-    document.getElementById("rango-info").textContent =
-      `${MESES_FULL[parseInt(dM)]} ${dA} → ${MESES_FULL[parseInt(hM)]} ${hA}` +
-      (contrato ? ` · ${contrato}` : "");
 
   } catch(err) { console.error(err); }
 }
 
-// ── Toggle interanual ─────────────────────────────────────────
-function switchInteranual(modo) {
-  modoInteranual = modo;
-  document.getElementById("btn-facturacion").classList.toggle("active", modo === "facturacion");
-  document.getElementById("btn-pgn").classList.toggle("active", modo === "pgn");
-  if (charts.interanual) { charts.interanual.destroy(); delete charts.interanual; }
-  if (interanualData) renderInteranualChart(interanualData, modo);
-}
-
-// ── KPIs ──────────────────────────────────────────────────────
+// ── KPIs — siempre en facturación (son métricas financieras) ─
 function renderKPIs(linea) {
   const total = linea.reduce((s,d) => s + Number(d.monto_total||0), 0);
+  const totalPGN = linea.reduce((s,d) => s + Number(d.pgn_total||0), 0);
   const porMes = {};
   linea.forEach(d => porMes[d.periodo] = Number(d.monto_total||0));
   const periodos = Object.keys(porMes).sort();
@@ -279,152 +291,152 @@ function renderKPIs(linea) {
   }
   const varClass = variacion > 0 ? "up" : variacion < 0 ? "down" : "flat";
   const varIcon  = variacion > 0 ? "▲" : variacion < 0 ? "▼" : "—";
+
   document.getElementById("kpis").innerHTML = `
     <div class="kpi">
       <div class="kpi-label">Total facturado en el período</div>
       <div class="kpi-val">${formatMonto(total)}</div>
     </div>
+    <div class="kpi">
+      <div class="kpi-label">Total PGN en el período</div>
+      <div class="kpi-val" style="font-size:22px">${Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})} PGN</div>
+    </div>
     <div class="kpi" style="border-left-color:var(--secundario)">
-      <div class="kpi-label">Variación último mes del rango</div>
+      <div class="kpi-label">Variación último mes</div>
       <div class="kpi-val" style="color:var(--secundario);font-size:22px">${Math.abs(variacion)}%</div>
       <span class="kpi-badge ${varClass}">${varIcon} vs mes anterior</span>
     </div>
   `;
 }
 
+// ── Helpers ───────────────────────────────────────────────────
+const esPGN = () => modo === "pgn";
+
+function getValor(d, campoMonto, campoPGN) {
+  return esPGN() ? Number(d[campoPGN]||0) : Number(d[campoMonto]||0);
+}
+
+function fmtY(v) {
+  if (esPGN()) return v >= 1e6 ? (v/1e6).toFixed(1)+"M" : (v/1e3).toFixed(0)+"K PGN";
+  return "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K");
+}
+
+function fmtTooltip(v) {
+  if (esPGN()) return " " + Number(v).toLocaleString("es-AR",{maximumFractionDigits:1}) + " PGN";
+  return " " + formatMonto(v);
+}
+
 // ── Línea ─────────────────────────────────────────────────────
 function renderLineaChart(datos) {
   const ctx  = document.getElementById("chart-linea").getContext("2d");
   const lbls = datos.map(d => { const[a,m]=d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
+  const vals = datos.map(d => getValor(d, "monto_total", "pgn_total"));
+
   charts.linea = new Chart(ctx, {
     type:"line",
     data:{labels:lbls, datasets:[{
-      label:"Total", data:datos.map(d=>Number(d.monto_total)),
+      label: esPGN() ? "PGN" : "Facturación",
+      data:vals,
       borderColor:"#DCA028", backgroundColor:"rgba(220,160,40,.08)",
       borderWidth:2.5, pointRadius:5, pointBackgroundColor:"#DCA028",
       pointBorderColor:"#fff", pointBorderWidth:2, tension:.35, fill:true,
     }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+formatMonto(c.raw)}}},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>fmtTooltip(c.raw)}}},
       scales:{
-        y:{beginAtZero:true,ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
-        x:{ticks:{font:{size:11},maxRotation:45},grid:{display:false}}
+        y:{beginAtZero:true, ticks:{callback:fmtY, font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"}},
+        x:{ticks:{font:{size:11},maxRotation:45}, grid:{display:false}}
       }
     }
   });
 }
 
-// ── Barras ────────────────────────────────────────────────────
+// ── Barras por contrato ───────────────────────────────────────
 function renderBarrasChart(datos) {
   const ctx       = document.getElementById("chart-barras").getContext("2d");
   const periodos  = [...new Set(datos.map(d=>d.periodo))].sort();
   const contratos = [...new Set(datos.map(d=>d.contrato))].sort();
   const labels    = periodos.map(p=>{ const[a,m]=p.split("-"); return MESES_CORTO[parseInt(m)]+" "+a.slice(2); });
-  const datasets  = contratos.map((k,i)=>({
-    label:k,
-    data:periodos.map(p=>{ const r=datos.find(d=>d.periodo===p&&d.contrato===k); return r?Number(r.monto_total):0; }),
-    backgroundColor:COLORES[i%COLORES.length]+"CC",
-    borderColor:COLORES[i%COLORES.length],
+
+  const datasets = contratos.map((k,i) => ({
+    label: k,
+    data: periodos.map(p => {
+      const r = datos.find(d => d.periodo===p && d.contrato===k);
+      return r ? getValor(r, "monto_total", "pgn_total") : 0;
+    }),
+    backgroundColor: COLORES[i%COLORES.length]+"CC",
+    borderColor:     COLORES[i%COLORES.length],
     borderWidth:1, borderRadius:4,
   }));
+
   charts.barras = new Chart(ctx, {
-    type:"bar", data:{labels,datasets},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:"top",labels:{font:{size:11},boxWidth:12}},
-        tooltip:{callbacks:{label:c=>" "+c.dataset.label+": "+formatMonto(c.raw)}}},
+    type:"bar", data:{labels, datasets},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:"top", labels:{font:{size:11},boxWidth:12}},
+        tooltip:{callbacks:{label:c=>" "+c.dataset.label+": "+fmtTooltip(c.raw).trim()}}
+      },
       scales:{
-        y:{beginAtZero:true,ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
-        x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}}
+        y:{beginAtZero:true, ticks:{callback:fmtY, font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"}},
+        x:{ticks:{font:{size:10},maxRotation:45}, grid:{display:false}}
       }
     }
   });
 }
 
 // ── Interanual ────────────────────────────────────────────────
-function renderInteranualChart(data, modo) {
-  const meses = data.meses || [];
-  if (!meses.length) return;
-
-  const anioAct = data.anio_actual;
-  const anioAnt = data.anio_anterior;
-  const esPGN   = modo === "pgn";
+function renderInteranualChart(data) {
+  if (!data || !data.meses || !data.meses.length) return;
+  const meses    = data.meses;
+  const anioAct  = data.anio_actual;
+  const anioAnt  = data.anio_anterior;
+  const labels   = meses.map(d => MESES_CORTO[d.mes]);
+  const valAct   = meses.map(d => esPGN() ? d.pgn_actual   : d.monto_actual);
+  const valAnt   = meses.map(d => esPGN() ? d.pgn_anterior : d.monto_anterior);
+  const varData  = meses.map(d => esPGN() ? d.var_pgn      : d.var_monto);
+  const unidad   = esPGN() ? "PGN" : "$";
 
   document.getElementById("interanual-sub").textContent =
-    `Comparación mes a mes: ${anioAct} vs ${anioAnt} — ${esPGN ? "en Puntos Gasnor (PGN)" : "en Facturación ($)"}`;
+    `${anioAct} vs ${anioAnt} — en ${esPGN() ? "Puntos Gasnor (PGN)" : "Facturación ($)"}`;
 
   document.getElementById("interanual-leyenda").innerHTML = `
     <div class="leyenda-item"><div class="leyenda-dot" style="background:#DCA028"></div>${anioAct}</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#787878;opacity:.6"></div>${anioAnt || "Año anterior"}</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#787878;opacity:.6"></div>${anioAnt||"Año anterior"}</div>
     <div class="leyenda-item"><div class="leyenda-dot" style="background:#059669"></div>Variación % (eje der.)</div>
   `;
 
-  const labels   = meses.map(d => MESES_CORTO[d.mes]);
-  const valAct   = meses.map(d => esPGN ? d.pgn_actual   : d.monto_actual);
-  const valAnt   = meses.map(d => esPGN ? d.pgn_anterior : d.monto_anterior);
-  const variacion= meses.map(d => esPGN ? d.var_pgn      : d.var_monto);
-
-  const fmtY     = esPGN
-    ? v => v >= 1e6 ? (v/1e6).toFixed(1)+"M PGN" : (v/1e3).toFixed(0)+"K PGN"
-    : v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K");
-
-  const fmtTip   = esPGN
-    ? (v, anio) => ` ${anio}: ${v !== null ? Number(v).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : "—"}`
-    : (v, anio) => ` ${anio}: ${v !== null ? formatMonto(v) : "—"}`;
-
   const ctx = document.getElementById("chart-interanual").getContext("2d");
   charts.interanual = new Chart(ctx, {
-    data: {
+    data:{
       labels,
-      datasets: [
-        {
-          type:"bar", label:String(anioAct),
-          data:valAct,
-          backgroundColor:"#DCA028CC", borderColor:"#DCA028",
-          borderWidth:1, borderRadius:4, yAxisID:"y",
-        },
-        {
-          type:"bar", label:String(anioAnt || "Anterior"),
-          data:valAnt,
-          backgroundColor:"#78787866", borderColor:"#787878",
-          borderWidth:1, borderRadius:4, yAxisID:"y",
-        },
-        {
-          type:"line", label:"Variación %",
-          data:variacion,
-          borderColor:"#059669", backgroundColor:"transparent",
-          borderWidth:2.5, pointRadius:5,
-          pointBackgroundColor: variacion.map(v => v === null ? "#999" : v >= 0 ? "#059669" : "#DC2626"),
-          pointBorderColor:"#fff", pointBorderWidth:2,
-          tension:.3, yAxisID:"y2",
-        }
+      datasets:[
+        { type:"bar", label:String(anioAct), data:valAct,
+          backgroundColor:"#DCA028CC", borderColor:"#DCA028", borderWidth:1, borderRadius:4, yAxisID:"y" },
+        { type:"bar", label:String(anioAnt||"Anterior"), data:valAnt,
+          backgroundColor:"#78787866", borderColor:"#787878", borderWidth:1, borderRadius:4, yAxisID:"y" },
+        { type:"line", label:"Variación %", data:varData,
+          borderColor:"#059669", backgroundColor:"transparent", borderWidth:2.5,
+          pointRadius:5,
+          pointBackgroundColor: varData.map(v => v===null?"#999":v>=0?"#059669":"#DC2626"),
+          pointBorderColor:"#fff", pointBorderWidth:2, tension:.3, yAxisID:"y2" }
       ]
     },
-    options: {
-      responsive:true, maintainAspectRatio:false,
+    options:{responsive:true, maintainAspectRatio:false,
       plugins:{
-        legend:{position:"top",labels:{font:{size:11},boxWidth:12}},
+        legend:{position:"top", labels:{font:{size:11},boxWidth:12}},
         tooltip:{callbacks:{
           label: c => {
             if (c.dataset.label === "Variación %")
-              return ` Variación: ${c.raw !== null ? c.raw+"%" : "Sin dato año anterior"}`;
-            const anio = c.dataset.label;
-            return fmtTip(c.raw, anio);
+              return ` Variación: ${c.raw !== null ? c.raw+"%" : "Sin dato"}`;
+            return ` ${c.dataset.label}: ${fmtTooltip(c.raw).trim()}`;
           }
         }}
       },
       scales:{
-        y:{
-          beginAtZero:true,
-          ticks:{callback:fmtY, font:{size:11}},
-          grid:{color:"rgba(0,0,0,.05)"},
-          title:{display:true, text: esPGN ? "Puntos Gasnor" : "Facturación ($)", font:{size:11}},
-        },
-        y2:{
-          position:"right",
-          ticks:{callback:v=>v+"%", font:{size:11}},
-          grid:{display:false},
-          title:{display:true, text:"Variación %", font:{size:11}},
-        },
+        y:{ beginAtZero:true, ticks:{callback:fmtY, font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"},
+            title:{display:true, text:unidad, font:{size:11}} },
+        y2:{ position:"right", ticks:{callback:v=>v+"%", font:{size:11}}, grid:{display:false},
+             title:{display:true, text:"Variación %", font:{size:11}} },
         x:{ticks:{font:{size:11}}, grid:{display:false}}
       }
     }
@@ -433,24 +445,33 @@ function renderInteranualChart(data, modo) {
 
 // ── Top ítems ─────────────────────────────────────────────────
 function renderItemsChart(datos) {
-  const ctx = document.getElementById("chart-items").getContext("2d");
+  const ctx  = document.getElementById("chart-items").getContext("2d");
+  const vals = datos.map(d => getValor(d, "monto_total", "pgn_total"));
+
+  // Reordenar por el valor actual del modo
+  const sorted = [...datos].map((d,i) => ({d, v:vals[i]}))
+    .sort((a,b) => b.v - a.v);
+
   charts.items = new Chart(ctx, {
     type:"bar",
     data:{
-      labels:datos.map(d=>d.item_codigo+" ("+d.contrato+")"),
+      labels: sorted.map(x => x.d.item_codigo+" ("+x.d.contrato+")"),
       datasets:[{
-        label:"Total certificado",
-        data:datos.map(d=>Number(d.monto_total)),
-        backgroundColor:"#DCA028CC", borderColor:"#DCA028",
-        borderWidth:1, borderRadius:4,
+        label: esPGN() ? "PGN" : "Total certificado",
+        data: sorted.map(x => x.v),
+        backgroundColor:"#DCA028CC", borderColor:"#DCA028", borderWidth:1, borderRadius:4,
       }]
     },
-    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+    options:{indexAxis:"y", responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>" "+formatMonto(c.raw), afterLabel:c=>" "+(datos[c.dataIndex].tarea||"")}}},
+        tooltip:{callbacks:{
+          label: c => fmtTooltip(c.raw),
+          afterLabel: c => " " + (sorted[c.dataIndex].d.tarea||"")
+        }}
+      },
       scales:{
-        x:{beginAtZero:true,ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
-        y:{ticks:{font:{size:11}},grid:{display:false}}
+        x:{beginAtZero:true, ticks:{callback:fmtY, font:{size:11}}, grid:{color:"rgba(0,0,0,.05)"}},
+        y:{ticks:{font:{size:11}}, grid:{display:false}}
       }
     }
   });
