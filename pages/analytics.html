@@ -140,6 +140,49 @@
       <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
     </div>
 
+    <!-- Estado de cargas -->
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="chart-title">Estado de cargas por contrato</div>
+          <div class="chart-sub">Seguimiento de certificaciones desde enero 2025</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="filtro-estado-k" style="width:auto" onchange="filtrarEstado()">
+            <option value="">Todos los contratos</option>
+          </select>
+          <select id="filtro-estado-tipo" style="width:auto" onchange="filtrarEstado()">
+            <option value="">Todos</option>
+            <option value="pendiente">Solo pendientes</option>
+            <option value="cargado">Solo cargados</option>
+          </select>
+        </div>
+      </div>
+      <div id="estado-resumen" style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap"></div>
+      <div class="tabla-wrap">
+        <table style="font-size:13px">
+          <thead>
+            <tr>
+              <th>Período</th><th>Contrato</th>
+              <th style="text-align:center">Estado</th>
+              <th>Cargado por</th><th>Fecha carga</th>
+              <th style="text-align:right">Líneas</th>
+            </tr>
+          </thead>
+          <tbody id="body-estado">
+            <tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
+        <span id="estado-pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" id="estado-btn-prev" onclick="cambiarPaginaEstado(-1)">← Anterior</button>
+          <button class="btn btn-sm" id="estado-btn-next" onclick="cambiarPaginaEstado(1)">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -475,6 +518,99 @@ function renderItemsChart(datos) {
       }
     }
   });
+}
+
+
+// ── Estado de cargas ──────────────────────────────────────────
+let estadoData   = [];
+let estadoPagina = 1;
+const ESTADO_POR_PAG = 15;
+
+async function cargarEstado() {
+  try {
+    estadoData = await get("/analytics/estado-cargas");
+    const contratos = [...new Set(estadoData.map(r => r.contrato))].sort();
+    const sel = document.getElementById("filtro-estado-k");
+    sel.innerHTML = '<option value="">Todos los contratos</option>';
+    contratos.forEach(k => sel.appendChild(new Option(k, k)));
+    filtrarEstado();
+  } catch(err) { console.error(err); }
+}
+
+function filtrarEstado() {
+  estadoPagina = 1;
+  renderEstado();
+}
+
+function renderEstado() {
+  const k    = document.getElementById("filtro-estado-k").value;
+  const tipo = document.getElementById("filtro-estado-tipo").value;
+
+  const filtrado = estadoData.filter(r => {
+    if (k && r.contrato !== k) return false;
+    if (tipo === "pendiente" && r.cargado) return false;
+    if (tipo === "cargado"   && !r.cargado) return false;
+    return true;
+  });
+
+  const totalPend = filtrado.filter(r => !r.cargado).length;
+  const totalCarg = filtrado.filter(r =>  r.cargado).length;
+  document.getElementById("estado-resumen").innerHTML = `
+    <span class="badge badge-ok"  style="font-size:12px;padding:5px 12px">✓ ${totalCarg} cargados</span>
+    <span class="badge badge-err" style="font-size:12px;padding:5px 12px">⚠ ${totalPend} pendientes</span>
+  `;
+
+  const total    = filtrado.length;
+  const totalPag = Math.ceil(total / ESTADO_POR_PAG) || 1;
+  const inicio   = (estadoPagina - 1) * ESTADO_POR_PAG;
+  const pagina   = filtrado.slice(inicio, inicio + ESTADO_POR_PAG);
+
+  document.getElementById("estado-pag-info").textContent =
+    total ? `Mostrando ${inicio+1}–${Math.min(inicio+ESTADO_POR_PAG,total)} de ${total}` : "";
+  document.getElementById("estado-btn-prev").disabled = estadoPagina <= 1;
+  document.getElementById("estado-btn-next").disabled = estadoPagina >= totalPag;
+
+  if (!pagina.length) {
+    document.getElementById("body-estado").innerHTML =
+      '<tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
+    return;
+  }
+
+  document.getElementById("body-estado").innerHTML = pagina.map(r => {
+    const hoy = new Date();
+    const [anioP, mesP] = r.periodo.split("-").map(Number);
+    const esPasado = anioP < hoy.getFullYear() || (anioP === hoy.getFullYear() && mesP < hoy.getMonth() + 1);
+    const badgeClass = r.cargado ? "badge-ok" : esPasado ? "badge-err" : "badge-warn";
+    const badgeText  = r.cargado ? "✓ Cargado" : esPasado ? "⚠ Vencido" : "Pendiente";
+    const rowBg      = !r.cargado && esPasado ? "background:var(--rojo-light)" : !r.cargado ? "background:var(--amarillo-light)" : "";
+    return `<tr style="${rowBg}">
+      <td><strong>${r.periodo}</strong></td>
+      <td><span class="badge badge-info">${r.contrato}</span></td>
+      <td style="text-align:center"><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td>${r.usuario || "—"}</td>
+      <td>${r.cargado_en || "—"}</td>
+      <td style="text-align:right">${r.filas_cargadas !== null ? Number(r.filas_cargadas).toLocaleString("es-AR") : "—"}</td>
+    </tr>`;
+  }).join("");
+}
+
+function cambiarPaginaEstado(dir) {
+  estadoPagina += dir;
+  renderEstado();
+}
+
+async function init() {
+  try {
+    const contratos = await get("/analytics/contratos");
+    const sel = document.getElementById("filtro-contrato");
+    contratos.forEach(k => sel.appendChild(new Option(k, k)));
+  } catch(e) {}
+  poblarFiltrosFecha();
+  const { desde, hasta } = getRango();
+  await Promise.all([
+    cargarDatos(desde, hasta, ""),
+    cargarEstado(),
+  ]);
 }
 
 init();
