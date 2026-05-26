@@ -52,7 +52,7 @@
         <div class="drop-zone" id="drop-zone">
           <div class="drop-icon">📊</div>
           <div class="drop-title">Arrastrá tu archivo o hacé clic para seleccionar</div>
-          <div class="drop-sub">Formatos: .xlsx · .xls — Máximo 20 MB</div>
+          <div class="drop-sub">Formatos: .xlsx · .xls · .pdf — Máximo 20 MB</div>
           <input type="file" id="file-input" accept=".xlsx,.xls,.xlsm,.pdf" style="display:none">
         </div>
         <div id="file-seleccionado" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--verde-light);border-radius:8px;font-size:13px">
@@ -130,7 +130,7 @@
       <div class="card">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
           <span style="font-size:12px;color:var(--gris-texto)">
-            Podés editar provincia, cantidad y total directamente en la tabla.
+            Podés editar provincia, contrato, cantidad y total directamente en la tabla.
           </span>
           <div style="flex:1"></div>
           <select id="filtro-hoja" style="width:auto">
@@ -142,7 +142,10 @@
           <table>
             <thead style="position:sticky;top:0;z-index:1">
               <tr>
-                <th>Hoja</th><th>Ítem</th><th>Tarea</th>
+                <th>Hoja</th>
+                <th>Ítem</th>
+                <th>Tarea</th>
+                <th>Contrato ✏️</th>
                 <th>Provincia ✏️</th>
                 <th>Cant. ✏️</th>
                 <th style="text-align:right">$ Unit.</th>
@@ -184,10 +187,11 @@ Auth.requireLogin();
 renderSidebar("upload");
 
 let archivoSeleccionado = null;
-let datosPreview        = null;   // respuesta completa del backend (incluye cache_id)
+let datosPreview        = null;
 let hojasSeleccionadas  = new Set();
 let filasEditables      = [];
 let provincias          = [];
+let contratosDisponibles = [];
 
 // Poblar años
 const anioSel = document.getElementById("anio");
@@ -196,10 +200,16 @@ for (let y = anioActual; y >= 2022; y--)
   anioSel.appendChild(new Option(y, y));
 document.getElementById("mes").value = new Date().getMonth() + 1;
 
-// Cargar provincias al inicio
-get("/certificaciones/provincias").then(data => { provincias = data; }).catch(() => {});
+// Cargar provincias y contratos al inicio
+Promise.all([
+  get("/certificaciones/provincias"),
+  get("/analytics/contratos"),
+]).then(([provs, conts]) => {
+  provincias           = provs;
+  contratosDisponibles = conts;
+}).catch(() => {});
 
-// ── Drop zone Excel ──────────────────────────────────────────
+// ── Drop zone ──────────────────────────────────────────────
 const dropZone  = document.getElementById("drop-zone");
 const fileInput = document.getElementById("file-input");
 dropZone.addEventListener("click", () => fileInput.click());
@@ -233,9 +243,7 @@ function limpiarArchivo() {
   document.getElementById("btn-paso1").disabled = true;
 }
 
-
-
-// ── PASO 1 → 2: subir y parsear ─────────────────────────────
+// ── PASO 1 → 2 ────────────────────────────────────────────
 document.getElementById("btn-paso1").addEventListener("click", async () => {
   const btn = document.getElementById("btn-paso1");
   btn.disabled = true;
@@ -247,7 +255,6 @@ document.getElementById("btn-paso1").addEventListener("click", async () => {
   form.append("periodo_mes",  document.getElementById("mes").value);
 
   try {
-    // El backend parsea UNA SOLA VEZ y devuelve cache_id
     datosPreview = await apiFetch("/certificaciones/preview", { method: "POST", body: form });
     mostrarSelectorHojas(datosPreview.hojas);
     irPaso(2);
@@ -260,55 +267,53 @@ document.getElementById("btn-paso1").addEventListener("click", async () => {
 
 // ── Selector de hojas ────────────────────────────────────────
 function mostrarSelectorHojas(hojas) {
-    const contratos = Auth.getUser().contratos || [];
-    
-    // Si es admin ve todo, si es jefe solo sus hojas
-    const hojasFiltradas = Auth.isAdmin() 
-        ? hojas 
-        : hojas.filter(h => contratos.some(k => h.toUpperCase().includes(k.toUpperCase())));
+  const contratos = Auth.getUser().contratos || [];
+  const hojasFiltradas = Auth.isAdmin()
+    ? hojas
+    : hojas.filter(h => contratos.some(k => h.toUpperCase().includes(k.toUpperCase())));
+  hojasSeleccionadas = new Set(hojasFiltradas);
 
-    // Las hojas que no corresponden se muestran deshabilitadas
-    hojasSeleccionadas = new Set(hojasFiltradas);
-    
-    document.getElementById("hojas-grid").innerHTML = hojas.map(h => {
-        const permitida = Auth.isAdmin() || contratos.some(k => h.toUpperCase().includes(k.toUpperCase()));
-        return `
-            <label class="hoja-chip ${permitida ? 'selected' : ''}" 
-                   id="chip-${h.replace(/[^a-zA-Z0-9]/g,'-')}"
-                   style="${!permitida ? 'opacity:.4;cursor:not-allowed' : ''}">
-                <input type="checkbox" ${permitida ? 'checked' : 'disabled'}
-                    onchange="toggleHoja('${h}', this.checked)">
-                ${h} ${!permitida ? '🔒' : ''}
-            </label>
-        `;
-    }).join("");
+  document.getElementById("hojas-grid").innerHTML = hojas.map(h => {
+    const permitida = Auth.isAdmin() || contratos.some(k => h.toUpperCase().includes(k.toUpperCase()));
+    return `
+      <label class="hoja-chip ${permitida ? "selected" : ""}"
+             id="chip-${h.replace(/[^a-zA-Z0-9]/g,"-")}"
+             style="${!permitida ? "opacity:.4;cursor:not-allowed" : ""}">
+        <input type="checkbox" ${permitida ? "checked" : "disabled"}
+          onchange="toggleHoja('${h}', this.checked)">
+        ${h} ${!permitida ? "🔒" : ""}
+      </label>`;
+  }).join("");
 }
 
 function toggleHoja(hoja, activa) {
   activa ? hojasSeleccionadas.add(hoja) : hojasSeleccionadas.delete(hoja);
-  const chip = document.getElementById("chip-" + hoja.replace(/[^a-zA-Z0-9]/g,'-'));
+  const chip = document.getElementById("chip-" + hoja.replace(/[^a-zA-Z0-9]/g,"-"));
   if (chip) chip.classList.toggle("selected", activa);
 }
 
 function toggleTodas(activa) {
   datosPreview.hojas.forEach(h => {
     activa ? hojasSeleccionadas.add(h) : hojasSeleccionadas.delete(h);
-    const chip = document.getElementById("chip-" + h.replace(/[^a-zA-Z0-9]/g,'-'));
+    const chip = document.getElementById("chip-" + h.replace(/[^a-zA-Z0-9]/g,"-"));
     if (chip) { chip.classList.toggle("selected", activa); chip.querySelector("input").checked = activa; }
   });
 }
 
-// ── PASO 2 → 3: filtrar y preparar edición ──────────────────
-function ejecutarPreview() {
-  if (!hojasSeleccionadas.size) { alert("Selecciona al menos una hoja"); return; }
+// ── PASO 2 → 3 ───────────────────────────────────────────────
+async function ejecutarPreview() {
+  if (!hojasSeleccionadas.size) { alert("Seleccioná al menos una hoja"); return; }
 
   const filas = datosPreview.filas.filter(f => hojasSeleccionadas.has(f.hoja_origen));
   if (!filas.length) { alert("No hay filas con cantidad mayor a 0 en las hojas seleccionadas"); return; }
 
-  // Copia mutable — sobre esta trabajamos las ediciones
+  // Para cada fila, resolver el contrato del maestro de ítems
+  // El contrato del archivo se ignora — usamos el del maestro como default
   filasEditables = filas.map(f => ({ ...f }));
 
-  // Poblar filtro de hojas
+  // Resolver contrato desde el maestro para cada ítem (en paralelo)
+  await _resolverContratosDesdeDB(filasEditables);
+
   const sel = document.getElementById("filtro-hoja");
   sel.innerHTML = '<option value="">Todas las hojas</option>';
   [...hojasSeleccionadas].forEach(h => sel.appendChild(new Option(h, h)));
@@ -318,7 +323,47 @@ function ejecutarPreview() {
   irPaso(3);
 }
 
-// ── Tabla editable ───────────────────────────────────────────
+async function _resolverContratosDesdeDB(filas) {
+  /**
+   * Consulta el maestro de ítems para asignar el contrato correcto a cada fila.
+   * Si el ítem no existe en el maestro, deja el contrato que traía el archivo.
+   */
+  try {
+    // Obtener todos los ítems únicos
+    const codigos = [...new Set(filas.map(f => f.item_codigo).filter(Boolean))];
+    if (!codigos.length) return;
+
+    // Buscar cada ítem en el maestro
+    const resultados = await Promise.all(
+      codigos.map(codigo =>
+        get(`/items/?buscar=${encodeURIComponent(codigo)}`).catch(() => [])
+      )
+    );
+
+    // Mapear código → contrato del maestro
+    const mapaContrato = {};
+    codigos.forEach((codigo, i) => {
+      const items = resultados[i] || [];
+      // Buscar match exacto
+      const match = items.find(it =>
+        it.item_codigo.replace(",",".") === codigo.replace(",",".")
+      );
+      if (match) mapaContrato[codigo] = match.codigo_k;
+    });
+
+    // Asignar contrato del maestro a cada fila
+    filas.forEach(f => {
+      if (f.item_codigo && mapaContrato[f.item_codigo]) {
+        f.contrato = mapaContrato[f.item_codigo];
+        f.contrato_del_maestro = mapaContrato[f.item_codigo];
+      }
+    });
+  } catch(e) {
+    console.error("Error resolviendo contratos:", e);
+  }
+}
+
+// ── Tabla editable ────────────────────────────────────────────
 function renderTabla() {
   const filtroH  = document.getElementById("filtro-hoja").value;
   const visibles = filtroH
@@ -326,20 +371,35 @@ function renderTabla() {
     : filasEditables;
 
   document.getElementById("body-preview").innerHTML = visibles.map(f => {
-    const idx     = filasEditables.indexOf(f);
-    const provVal = f.provincia || "";
-    const provOk  = provincias.some(p => p.provincia.toUpperCase() === provVal.toUpperCase());
-    const provCls = provOk ? "celda-edit" : "celda-edit invalida";
+    const idx      = filasEditables.indexOf(f);
+    const provVal  = f.provincia || "";
+    const provOk   = provincias.some(p => p.provincia.toUpperCase() === provVal.toUpperCase());
+    const provCls  = provOk ? "celda-edit" : "celda-edit invalida";
+    const contrato = f.contrato || "";
+    const esMaestro= contrato === f.contrato_del_maestro;
 
     const badge = f.tiene_error
-  ? `<span class="badge badge-err" title="${f.error_detalle || 'Error'}">⚠ ${f.error_detalle || 'Error'}</span>`
-  : '<span class="badge badge-ok">OK</span>';
+      ? `<span class="badge badge-err" title="${f.error_detalle || "Error"}">⚠ ${f.error_detalle || "Error"}</span>`
+      : '<span class="badge badge-ok">OK</span>';
 
-    return `<tr id="fila-${idx}" class="${f.tiene_error ? 'fila-error' : ''}">
+    return `<tr id="fila-${idx}" class="${f.tiene_error ? "fila-error" : ""}">
       <td style="font-size:11px;color:var(--gris-texto);white-space:nowrap">${f.hoja_origen}</td>
       <td><strong>${f.item_codigo}</strong></td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-          title="${f.tarea||''}">${f.tarea||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+          title="${f.tarea||""}">${f.tarea||"—"}</td>
+      <td>
+        <select class="celda-edit" style="width:80px"
+                title="${esMaestro ? "Contrato del maestro de ítems" : "Modificado"}"
+                onchange="editarCampo(${idx},'contrato',this.value)">
+          ${contratosDisponibles.map(k =>
+            `<option value="${k}" ${k===contrato?"selected":""}>${k}</option>`
+          ).join("")}
+          ${!contratosDisponibles.includes(contrato) && contrato
+            ? `<option value="${contrato}" selected>${contrato}</option>`
+            : ""}
+        </select>
+        ${esMaestro ? '<span title="Del maestro" style="font-size:10px;color:var(--primario)">✓</span>' : '<span title="Modificado" style="font-size:10px;color:var(--amarillo)">✏</span>'}
+      </td>
       <td>
         <select class="${provCls}" onchange="editarCampo(${idx},'provincia',this.value);validarProvincia(this,${idx})">
           <option value="">-- Seleccionar --</option>
@@ -349,12 +409,12 @@ function renderTabla() {
         </select>
       </td>
       <td>
-        <input type="number" class="celda-edit" value="${f.cantidades||''}" min="0" style="width:80px"
+        <input type="number" class="celda-edit" value="${f.cantidades||""}" min="0" style="width:80px"
           onchange="editarCampo(${idx},'cantidades',this.value)">
       </td>
       <td style="text-align:right;color:var(--gris-texto)">${formatMonto(f.precio_unitario)}</td>
       <td>
-        <input type="number" class="celda-edit" value="${f.total_mes||''}" min="0" style="width:110px;text-align:right"
+        <input type="number" class="celda-edit" value="${f.total_mes||""}" min="0" style="width:110px;text-align:right"
           onchange="editarCampo(${idx},'total_mes',this.value);actualizarMetricas()">
       </td>
       <td>${badge}</td>
@@ -365,7 +425,6 @@ function renderTabla() {
 function validarProvincia(sel, idx) {
   const ok = provincias.some(p => p.provincia === sel.value);
   sel.className = ok ? "celda-edit" : "celda-edit invalida";
-  filasEditables[idx].tiene_error = !ok && !sel.value;
   actualizarMetricas();
 }
 
@@ -384,18 +443,9 @@ function actualizarMetricas() {
   const aCargar  = filasEditables.length - conError - provInv;
 
   document.getElementById("metrics-preview").innerHTML = `
-    <div class="metric">
-      <div class="metric-label">Filas a cargar</div>
-      <div class="metric-val verde">${aCargar}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Con problema (se omiten)</div>
-      <div class="metric-val rojo">${conError + provInv}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Total mes</div>
-      <div class="metric-val verde">${formatMonto(total)}</div>
-    </div>
+    <div class="metric"><div class="metric-label">Filas a cargar</div><div class="metric-val verde">${aCargar}</div></div>
+    <div class="metric"><div class="metric-label">Con problema (se omiten)</div><div class="metric-val rojo">${conError + provInv}</div></div>
+    <div class="metric"><div class="metric-label">Total mes</div><div class="metric-val verde">${formatMonto(total)}</div></div>
   `;
 
   document.getElementById("resumen-edicion").textContent =
@@ -412,7 +462,7 @@ function actualizarMetricas() {
 
 document.getElementById("filtro-hoja").addEventListener("change", renderTabla);
 
-// ── PASO 3 → 4: confirmar usando cache_id ───────────────────
+// ── PASO 3 → 4: confirmar ────────────────────────────────────
 document.getElementById("btn-confirmar").addEventListener("click", async () => {
   const invalidas = filasEditables.filter(f =>
     !f.tiene_error &&
@@ -429,7 +479,6 @@ document.getElementById("btn-confirmar").addEventListener("click", async () => {
   btn.innerHTML = '<span class="spinner"></span> Cargando...';
 
   const form = new FormData();
-  // Solo enviamos el cache_id — NO el archivo de nuevo
   form.append("cache_id",       datosPreview.cache_id);
   form.append("hojas",          JSON.stringify([...hojasSeleccionadas]));
   form.append("filas_editadas", JSON.stringify(filasEditables));
@@ -437,7 +486,7 @@ document.getElementById("btn-confirmar").addEventListener("click", async () => {
   try {
     const res = await apiFetch("/certificaciones/confirmar", { method: "POST", body: form });
     irPaso(4);
-    document.getElementById("msg-ok").textContent     = "Certificacion cargada con exito!";
+    document.getElementById("msg-ok").textContent     = "¡Certificación cargada con éxito!";
     document.getElementById("msg-detalle").textContent =
       res.insertadas + " filas insertadas" + (res.omitidas ? " · " + res.omitidas + " omitidas" : "");
   } catch (err) {
@@ -447,7 +496,7 @@ document.getElementById("btn-confirmar").addEventListener("click", async () => {
   }
 });
 
-// ── Navegación ───────────────────────────────────────────────
+// ── Navegación ────────────────────────────────────────────────
 function irPaso(n) {
   [1,2,3,4].forEach(i =>
     document.getElementById("paso-" + i).style.display = i === n ? "block" : "none"
