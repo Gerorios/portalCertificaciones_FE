@@ -7,102 +7,162 @@
   <link rel="stylesheet" href="../css/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
-    /* Panel de filtros lateral */
-    .analytics-layout {
-      display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 1.25rem;
-      align-items: start;
-    }
-    .filtros-panel {
+    /* ── Barra de filtros ── */
+    .filtros-bar {
       background: var(--blanco);
       border: 1px solid var(--gris-borde);
       border-radius: var(--radio);
-      padding: 1.25rem;
+      padding: .75rem 1.25rem;
       box-shadow: var(--sombra);
-      position: sticky;
-      top: 1rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+      position: relative;
     }
-    .filtros-panel h3 {
-      font-size: 13px;
+    .filtros-bar .sep {
+      width: 1px; height: 24px;
+      background: var(--gris-borde);
+      flex-shrink: 0;
+    }
+
+    /* Selector de período inline */
+    .periodo-grupo {
+      display: flex; align-items: center; gap: 6px; font-size: 13px;
+    }
+    .periodo-grupo label { color: var(--gris-texto); font-size: 11px; white-space: nowrap; }
+    .periodo-grupo select { font-size: 12px; padding: 4px 6px; }
+
+    /* Toggle compacto tipo pastilla */
+    .pill-toggle {
+      display: flex;
+      background: var(--gris-bg);
+      border-radius: 20px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .pill-btn {
+      padding: 4px 12px;
+      border-radius: 18px;
+      border: none;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--gris-texto);
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .pill-btn.active {
+      background: var(--blanco);
+      color: var(--primario);
+      box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    }
+
+    /* Botón filtros avanzados */
+    .btn-filtros-avanzados {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px;
+      border: 1px solid var(--gris-borde);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--blanco);
+      color: var(--secundario);
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+    }
+    .btn-filtros-avanzados:hover { border-color: var(--primario); color: var(--primario); }
+    .btn-filtros-avanzados.activo { background: var(--primario-light); border-color: var(--primario); color: var(--primario-dark); }
+    .filtros-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--primario); color: var(--blanco);
+      font-size: 10px; font-weight: 700;
+    }
+
+    /* Dropdown de filtros avanzados */
+    .filtros-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      z-index: 100;
+      background: var(--blanco);
+      border: 1px solid var(--gris-borde);
+      border-radius: var(--radio);
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      padding: 1.25rem;
+      min-width: 480px;
+      max-width: 640px;
+    }
+    .filtros-dropdown.open { display: block; }
+    .filtros-dropdown-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .fd-seccion h4 {
+      font-size: 11px;
       font-weight: 600;
       color: var(--gris-texto);
       text-transform: uppercase;
       letter-spacing: .5px;
-      margin-bottom: .75rem;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--gris-borde);
+      margin-bottom: .6rem;
     }
-    .filtros-panel h3:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-
-    /* Checkboxes */
-    .check-grupo { display: flex; flex-direction: column; gap: 6px; }
-    .check-item  {
+    .fd-checks {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .fd-check-item {
       display: flex; align-items: center; gap: 8px;
-      font-size: 13px; cursor: pointer; padding: 4px 6px;
-      border-radius: 6px; transition: background .1s;
+      font-size: 13px; cursor: pointer;
+      padding: 3px 6px; border-radius: 6px;
+      transition: background .1s; user-select: none;
     }
-    .check-item:hover { background: var(--gris-bg); }
-    .check-item input[type="checkbox"] {
-      width: 15px; height: 15px; cursor: pointer;
-      accent-color: var(--primario);
+    .fd-check-item:hover { background: var(--gris-bg); }
+    .fd-check-item input {
+      width: 14px; height: 14px;
+      accent-color: var(--primario); cursor: pointer;
     }
-    .check-badge {
-      display: inline-block; font-size: 10px; font-weight: 600;
-      padding: 1px 6px; border-radius: 10px;
+    .fd-sel-btns {
+      display: flex; gap: 6px; margin-top: 6px;
+    }
+    .fd-sel-btn {
+      font-size: 11px; padding: 2px 8px;
+      border: 1px solid var(--gris-borde);
+      border-radius: 12px; background: var(--blanco);
+      cursor: pointer; color: var(--gris-texto);
+    }
+    .fd-sel-btn:hover { color: var(--primario); border-color: var(--primario); }
+    .fd-footer {
+      border-top: 1px solid var(--gris-borde);
+      padding-top: .75rem; margin-top: .75rem;
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+
+    /* Chip de filtro activo */
+    .filtro-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
       background: var(--primario-light); color: var(--primario-dark);
-      margin-left: auto;
+      font-size: 11px; font-weight: 500;
     }
-
-    /* Toggle OPEX/CAPEX */
-    .tipo-toggle {
-      display: flex; border: 1px solid var(--gris-borde);
-      border-radius: 8px; overflow: hidden; width: 100%;
+    .filtro-chip button {
+      background: none; border: none; cursor: pointer;
+      color: var(--primario-dark); font-size: 14px;
+      line-height: 1; padding: 0;
     }
-    .tipo-btn {
-      flex: 1; padding: 6px 8px; font-size: 12px; font-weight: 500;
-      border: none; background: var(--blanco); cursor: pointer;
-      color: var(--gris-texto); transition: all .15s; text-align: center;
-    }
-    .tipo-btn.active { background: var(--primario); color: var(--blanco); }
-
-    /* Rango de fechas */
-    .fecha-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: .5rem; }
-    .fecha-row label { font-size: 11px; color: var(--gris-texto); margin: 0; }
-    .fecha-inputs { display: flex; gap: 4px; }
-    .fecha-inputs select { font-size: 11px; flex: 1; }
-
-    /* Botón aplicar */
-    .btn-aplicar {
-      width: 100%; margin-top: 1rem; padding: 8px;
-      background: var(--primario); color: var(--blanco);
-      border: none; border-radius: 8px; font-size: 13px;
-      font-weight: 600; cursor: pointer; transition: background .15s;
-    }
-    .btn-aplicar:hover { background: var(--primario-dark); }
-    .btn-reset {
-      width: 100%; margin-top: 6px; padding: 6px;
-      background: var(--blanco); color: var(--gris-texto);
-      border: 1px solid var(--gris-borde); border-radius: 8px;
-      font-size: 12px; cursor: pointer;
-    }
-
-    /* Contenido de gráficos */
-    .charts-content {}
-    .chart-card {
-      background: var(--blanco); border: 1px solid var(--gris-borde);
-      border-radius: var(--radio); padding: 1.25rem;
-      box-shadow: var(--sombra); margin-bottom: 1.25rem;
-    }
-    .chart-title { font-size: 14px; font-weight: 600; margin-bottom: .25rem; }
-    .chart-sub   { font-size: 12px; color: var(--gris-texto); margin-bottom: 1rem; }
-    .chart-wrap  { position: relative; height: 300px; }
-    .chart-wrap.tall { height: 380px; }
 
     /* KPIs */
     .kpi-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
       gap: 12px; margin-bottom: 1.25rem;
     }
     .kpi {
@@ -113,25 +173,29 @@
     .kpi.sec  { border-left-color: var(--secundario); }
     .kpi.prov { border-left-color: #059669; }
     .kpi-label { font-size: 11px; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-    .kpi-val   { font-size: 24px; font-weight: 700; color: var(--primario); }
+    .kpi-val   { font-size: 22px; font-weight: 700; color: var(--primario); }
     .kpi.sec .kpi-val  { color: var(--secundario); }
-    .kpi.prov .kpi-val { color: #059669; }
+    .kpi.prov .kpi-val { color: #059669; font-size: 18px; }
 
-    /* Leyenda interanual */
+    /* Gráficos */
+    .chart-card {
+      background: var(--blanco); border: 1px solid var(--gris-borde);
+      border-radius: var(--radio); padding: 1.25rem;
+      box-shadow: var(--sombra); margin-bottom: 1.25rem;
+    }
+    .chart-title { font-size: 14px; font-weight: 600; margin-bottom: .25rem; }
+    .chart-sub   { font-size: 12px; color: var(--gris-texto); margin-bottom: 1rem; }
+    .chart-wrap  { position: relative; height: 300px; }
+    .chart-wrap.tall { height: 380px; }
+
     .leyenda { display: flex; gap: 1rem; margin-bottom: .75rem; flex-wrap: wrap; }
     .leyenda-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
     .leyenda-dot  { width: 10px; height: 10px; border-radius: 50%; }
 
-    /* Modo badge */
     .modo-badge {
       display: inline-block; font-size: 11px; padding: 2px 8px;
       border-radius: 20px; background: var(--primario-light);
       color: var(--primario-dark); font-weight: 500; margin-left: 6px; vertical-align: middle;
-    }
-
-    @media (max-width: 900px) {
-      .analytics-layout { grid-template-columns: 1fr; }
-      .filtros-panel { position: static; }
     }
   </style>
 </head>
@@ -146,149 +210,167 @@
           Analytics — Vista Gerencial
           <span class="modo-badge" id="modo-badge">$ Facturación</span>
         </div>
-        <div class="page-sub">Análisis de certificaciones Naturgy</div>
+        <div class="page-sub" id="filtros-activos-desc">Sin filtros activos · Todos los contratos y provincias</div>
       </div>
     </div>
 
-    <div class="analytics-layout">
+    <!-- Barra de filtros compacta -->
+    <div class="filtros-bar" id="filtros-bar">
 
-      <!-- Panel de filtros lateral -->
-      <aside class="filtros-panel">
+      <!-- Período -->
+      <div class="periodo-grupo">
+        <label>Desde</label>
+        <select id="desde-mes" style="width:auto"></select>
+        <select id="desde-anio" style="width:auto"></select>
+      </div>
+      <span style="color:var(--gris-texto);font-size:13px">→</span>
+      <div class="periodo-grupo">
+        <label>Hasta</label>
+        <select id="hasta-mes" style="width:auto"></select>
+        <select id="hasta-anio" style="width:auto"></select>
+      </div>
 
-        <h3>Período</h3>
-        <div class="fecha-row">
-          <label>Desde</label>
-          <div class="fecha-inputs">
-            <select id="desde-mes"></select>
-            <select id="desde-anio"></select>
-          </div>
-        </div>
-        <div class="fecha-row">
-          <label>Hasta</label>
-          <div class="fecha-inputs">
-            <select id="hasta-mes"></select>
-            <select id="hasta-anio"></select>
-          </div>
-        </div>
+      <div class="sep"></div>
 
-        <h3>Tipo</h3>
-        <div class="tipo-toggle">
-          <button class="tipo-btn active" id="tipo-ambos"  onclick="setTipo('')">Ambos</button>
-          <button class="tipo-btn"        id="tipo-opex"   onclick="setTipo('OPEX')">OPEX</button>
-          <button class="tipo-btn"        id="tipo-capex"  onclick="setTipo('CAPEX')">CAPEX</button>
-        </div>
+      <!-- Toggle OPEX/CAPEX -->
+      <div class="pill-toggle">
+        <button class="pill-btn active" id="tipo-ambos" onclick="setTipo('')">Ambos</button>
+        <button class="pill-btn" id="tipo-opex"  onclick="setTipo('OPEX')">OPEX</button>
+        <button class="pill-btn" id="tipo-capex" onclick="setTipo('CAPEX')">CAPEX</button>
+      </div>
 
-        <h3>Contratos</h3>
-        <div class="check-grupo" id="check-contratos">
-          <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllContratos(true)">Todos</button>
-          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllContratos(false)">Ninguno</button>
-        </div>
+      <div class="sep"></div>
 
-        <h3>Provincias</h3>
-        <div class="check-grupo" id="check-provincias">
-          <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllProvincias(true)">Todas</button>
-          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllProvincias(false)">Ninguna</button>
-        </div>
+      <!-- Toggle PGN/Facturación -->
+      <div class="pill-toggle">
+        <button class="pill-btn active" id="modo-fact" onclick="setModo('facturacion')">$ Facturación</button>
+        <button class="pill-btn" id="modo-pgn" onclick="setModo('pgn')">PGN</button>
+      </div>
 
-        <h3>Vista</h3>
-        <div class="tipo-toggle">
-          <button class="tipo-btn active" id="modo-fact" onclick="setModo('facturacion')">$ Facturación</button>
-          <button class="tipo-btn"        id="modo-pgn"  onclick="setModo('pgn')">PGN</button>
-        </div>
+      <div class="sep"></div>
 
-        <button class="btn-aplicar" onclick="aplicar()">Aplicar filtros</button>
-        <button class="btn-reset"   onclick="resetFiltros()">Restablecer</button>
+      <!-- Botón filtros avanzados (contratos + provincias) -->
+      <button class="btn-filtros-avanzados" id="btn-fa" onclick="toggleDropdown()">
+        <span>Contratos · Provincias</span>
+        <span class="filtros-badge" id="fa-badge" style="display:none">0</span>
+        <span id="fa-arrow">▾</span>
+      </button>
 
-      </aside>
-
-      <!-- Contenido principal -->
-      <div class="charts-content">
-
-        <!-- KPIs -->
-        <div class="kpi-grid" id="kpis">
-          <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
-        </div>
-
-        <!-- Evolución mensual -->
-        <div class="chart-card">
-          <div class="chart-title" id="linea-title">Evolución mensual del total certificado</div>
-          <div class="chart-sub">Total mes a mes en el período seleccionado</div>
-          <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
-        </div>
-
-        <!-- Por contrato y período -->
-        <div class="chart-card">
-          <div class="chart-title" id="barras-title">Certificado por contrato y período</div>
-          <div class="chart-sub">Comparación entre contratos K</div>
-          <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
-        </div>
-
-        <!-- Por provincia -->
-        <div class="chart-card">
-          <div class="chart-title" id="prov-title">Certificado por provincia</div>
-          <div class="chart-sub">Distribución geográfica en el período seleccionado</div>
-          <div class="chart-wrap"><canvas id="chart-provincia"></canvas></div>
-        </div>
-
-        <!-- Interanual -->
-        <div class="chart-card">
-          <div class="chart-title">Análisis interanual</div>
-          <div class="chart-sub" id="interanual-sub">Comparación año actual vs anterior</div>
-          <div class="leyenda" id="interanual-leyenda"></div>
-          <div class="chart-wrap tall"><canvas id="chart-interanual"></canvas></div>
-        </div>
-
-        <!-- Top ítems -->
-        <div class="chart-card">
-          <div class="chart-title" id="items-title">Top 10 ítems por monto certificado</div>
-          <div class="chart-sub">Ítems con mayor valor en el período seleccionado</div>
-          <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
-        </div>
-
-        <!-- Estado de cargas -->
-        <div class="chart-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="chart-title">Estado de cargas por contrato</div>
-              <div class="chart-sub">Seguimiento desde enero 2025</div>
+      <!-- Dropdown -->
+      <div class="filtros-dropdown" id="filtros-dropdown">
+        <div class="filtros-dropdown-grid">
+          <div class="fd-seccion">
+            <h4>Contratos</h4>
+            <div class="fd-checks" id="check-contratos">
+              <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <select id="filtro-estado-k"    style="width:auto" onchange="filtrarEstado()"><option value="">Todos los contratos</option></select>
-              <select id="filtro-estado-anio" style="width:auto" onchange="filtrarEstado()"><option value="">Todos los años</option></select>
-              <select id="filtro-estado-mes"  style="width:auto" onchange="filtrarEstado()"><option value="">Todos los meses</option></select>
-              <select id="filtro-estado-tipo" style="width:auto" onchange="filtrarEstado()">
-                <option value="">Todos</option>
-                <option value="pendiente">Solo pendientes</option>
-                <option value="cargado">Solo cargados</option>
-              </select>
+            <div class="fd-sel-btns">
+              <button class="fd-sel-btn" onclick="selAll('contratos',true)">Todos</button>
+              <button class="fd-sel-btn" onclick="selAll('contratos',false)">Ninguno</button>
             </div>
           </div>
-          <div id="estado-resumen" style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap"></div>
-          <div class="tabla-wrap">
-            <table style="font-size:13px">
-              <thead>
-                <tr><th>Período</th><th>Contrato</th><th style="text-align:center">Estado</th><th>Cargado por</th><th>Fecha</th><th style="text-align:right">Líneas</th></tr>
-              </thead>
-              <tbody id="body-estado"><tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr></tbody>
-            </table>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
-            <span id="estado-pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-sm" id="estado-btn-prev" onclick="cambiarPaginaEstado(-1)">← Anterior</button>
-              <button class="btn btn-sm" id="estado-btn-next" onclick="cambiarPaginaEstado(1)">Siguiente →</button>
+          <div class="fd-seccion">
+            <h4>Provincias</h4>
+            <div class="fd-checks" id="check-provincias">
+              <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
+            </div>
+            <div class="fd-sel-btns">
+              <button class="fd-sel-btn" onclick="selAll('provincias',true)">Todas</button>
+              <button class="fd-sel-btn" onclick="selAll('provincias',false)">Ninguna</button>
             </div>
           </div>
         </div>
+        <div class="fd-footer">
+          <button class="btn" onclick="cerrarDropdown()">Cancelar</button>
+          <button class="btn btn-primary" onclick="aplicarYCerrar()">Aplicar</button>
+        </div>
+      </div>
 
+      <!-- Spacer + botones -->
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <button class="btn btn-sm" onclick="resetFiltros()" style="font-size:11px">↺ Restablecer</button>
+        <button class="btn btn-primary btn-sm" onclick="aplicar()" style="font-size:12px">Aplicar</button>
+      </div>
+
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpis">
+      <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
+    </div>
+
+    <!-- Evolución mensual -->
+    <div class="chart-card">
+      <div class="chart-title" id="linea-title">Evolución mensual del total certificado</div>
+      <div class="chart-sub">Total mes a mes en el período seleccionado</div>
+      <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
+    </div>
+
+    <!-- Barras por contrato -->
+    <div class="chart-card">
+      <div class="chart-title" id="barras-title">Certificado por contrato y período</div>
+      <div class="chart-sub">Comparación entre contratos K</div>
+      <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
+    </div>
+
+    <!-- Por provincia -->
+    <div class="chart-card">
+      <div class="chart-title" id="prov-title">Certificado por provincia</div>
+      <div class="chart-sub">Distribución geográfica en el período</div>
+      <div class="chart-wrap"><canvas id="chart-provincia"></canvas></div>
+    </div>
+
+    <!-- Interanual -->
+    <div class="chart-card">
+      <div class="chart-title">Análisis interanual</div>
+      <div class="chart-sub" id="interanual-sub">Comparación año actual vs anterior</div>
+      <div class="leyenda" id="interanual-leyenda"></div>
+      <div class="chart-wrap tall"><canvas id="chart-interanual"></canvas></div>
+    </div>
+
+    <!-- Top ítems -->
+    <div class="chart-card">
+      <div class="chart-title" id="items-title">Top 10 ítems por monto certificado</div>
+      <div class="chart-sub">Ítems con mayor valor en el período seleccionado</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
+    </div>
+
+    <!-- Estado de cargas -->
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="chart-title">Estado de cargas por contrato</div>
+          <div class="chart-sub">Seguimiento desde enero 2025</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="filtro-estado-k"    style="width:auto" onchange="filtrarEstado()"><option value="">Todos los contratos</option></select>
+          <select id="filtro-estado-anio" style="width:auto" onchange="filtrarEstado()"><option value="">Todos los años</option></select>
+          <select id="filtro-estado-mes"  style="width:auto" onchange="filtrarEstado()"><option value="">Todos los meses</option></select>
+          <select id="filtro-estado-tipo" style="width:auto" onchange="filtrarEstado()">
+            <option value="">Todos</option>
+            <option value="pendiente">Solo pendientes</option>
+            <option value="cargado">Solo cargados</option>
+          </select>
+        </div>
+      </div>
+      <div id="estado-resumen" style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap"></div>
+      <div class="tabla-wrap">
+        <table style="font-size:13px">
+          <thead>
+            <tr><th>Período</th><th>Contrato</th><th style="text-align:center">Estado</th><th>Cargado por</th><th>Fecha</th><th style="text-align:right">Líneas</th></tr>
+          </thead>
+          <tbody id="body-estado"><tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
+        <span id="estado-pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" id="estado-btn-prev" onclick="cambiarPaginaEstado(-1)">← Anterior</button>
+          <button class="btn btn-sm" id="estado-btn-next" onclick="cambiarPaginaEstado(1)">Siguiente →</button>
+        </div>
       </div>
     </div>
+
   </main>
 </div>
 
@@ -302,96 +384,125 @@ const MESES_FULL  = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio"
 const MESES_CORTO = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const COLORES     = ["#DCA028","#4A4A4A","#E8831A","#787878","#F0C060","#2563EB","#059669","#DC2626","#7C3AED","#0891B2"];
 
-let charts        = {};
-let modo          = "facturacion";
-let tipoFiltro    = "";
-let contratosDisp = [];
-let provinciasDisp= [];
-let estadoData    = [];
-let estadoPagina  = 1;
+let charts         = {};
+let modo           = "facturacion";
+let tipoFiltro     = "";
+let estadoData     = [];
+let estadoPagina   = 1;
 const ESTADO_POR_PAG = 15;
 
 // ── Init ──────────────────────────────────────────────────────
 async function init() {
   poblarFiltrosFecha();
-
   try {
     const [conts, provs] = await Promise.all([
       get("/analytics/contratos"),
       get("/analytics/provincias"),
     ]);
-    contratosDisp  = conts;
-    provinciasDisp = provs;
-    renderCheckboxesContratos(conts, conts); // todos seleccionados
-    renderCheckboxesProvincias(provs, provs);
+    renderCheckboxes("check-contratos", conts, true);
+    renderCheckboxes("check-provincias", provs, true);
   } catch(e) { console.error(e); }
 
   aplicar();
   cargarEstado();
 }
 
-// ── Checkboxes contratos ──────────────────────────────────────
-function renderCheckboxesContratos(todos, seleccionados) {
-  document.getElementById("check-contratos").innerHTML = todos.map(k => `
-    <label class="check-item">
-      <input type="checkbox" value="${k}" ${seleccionados.includes(k)?"checked":""}
-             onchange="actualizarBadgeContrato()">
-      ${k}
+// ── Dropdown avanzado ─────────────────────────────────────────
+function toggleDropdown() {
+  const dd = document.getElementById("filtros-dropdown");
+  const btn = document.getElementById("btn-fa");
+  const open = dd.classList.toggle("open");
+  btn.classList.toggle("activo", open);
+  document.getElementById("fa-arrow").textContent = open ? "▴" : "▾";
+}
+function cerrarDropdown() {
+  document.getElementById("filtros-dropdown").classList.remove("open");
+  document.getElementById("btn-fa").classList.remove("activo");
+  document.getElementById("fa-arrow").textContent = "▾";
+}
+function aplicarYCerrar() { cerrarDropdown(); aplicar(); }
+
+// Cerrar dropdown al clickear afuera
+document.addEventListener("click", e => {
+  const bar = document.getElementById("filtros-bar");
+  if (!bar.contains(e.target)) cerrarDropdown();
+});
+
+// ── Checkboxes ────────────────────────────────────────────────
+function renderCheckboxes(containerId, items, checked) {
+  document.getElementById(containerId).innerHTML = items.map(v => `
+    <label class="fd-check-item">
+      <input type="checkbox" value="${v}" ${checked?"checked":""} onchange="actualizarBadge()">
+      ${v}
     </label>
   `).join("");
-  actualizarBadgeContrato();
+  actualizarBadge();
 }
 
-function actualizarBadgeContrato() {
-  const sel = getContratosSeleccionados();
-  // Sin badge — solo el título
+function selAll(tipo, activo) {
+  document.querySelectorAll(`#check-${tipo} input`).forEach(i => i.checked = activo);
+  actualizarBadge();
 }
 
-function getContratosSeleccionados() {
-  return [...document.querySelectorAll("#check-contratos input:checked")].map(i => i.value);
+function getChecked(containerId) {
+  return [...document.querySelectorAll(`#${containerId} input:checked`)].map(i => i.value);
 }
 
-function selAllContratos(activo) {
-  document.querySelectorAll("#check-contratos input").forEach(i => i.checked = activo);
+function actualizarBadge() {
+  const conts  = getChecked("check-contratos");
+  const provs  = getChecked("check-provincias");
+  const totalC = document.querySelectorAll("#check-contratos input").length;
+  const totalP = document.querySelectorAll("#check-provincias input").length;
+  let activos  = 0;
+  if (conts.length < totalC) activos += (totalC - conts.length);
+  if (provs.length < totalP) activos += (totalP - provs.length);
+  const badge = document.getElementById("fa-badge");
+  badge.style.display = activos > 0 ? "inline-flex" : "none";
+  badge.textContent   = activos;
+  document.getElementById("btn-fa").classList.toggle("activo", activos > 0);
+  // Actualizar descripción
+  actualizarDesc();
 }
 
-// ── Checkboxes provincias ─────────────────────────────────────
-function renderCheckboxesProvincias(todas, seleccionadas) {
-  document.getElementById("check-provincias").innerHTML = todas.map(p => `
-    <label class="check-item">
-      <input type="checkbox" value="${p}" ${seleccionadas.includes(p)?"checked":""}> ${p}
-    </label>
-  `).join("");
+function actualizarDesc() {
+  const { desde, hasta } = getRango();
+  const conts = getChecked("check-contratos");
+  const provs = getChecked("check-provincias");
+  const totalC = document.querySelectorAll("#check-contratos input").length;
+  const totalP = document.querySelectorAll("#check-provincias input").length;
+  const partes = [];
+  if (tipoFiltro) partes.push(tipoFiltro);
+  if (conts.length < totalC) partes.push(conts.join(", "));
+  else partes.push("Todos los contratos");
+  if (provs.length < totalP) partes.push(provs.join(", "));
+  else partes.push("Todas las provincias");
+  const [dA,dM] = desde.split("-");
+  const [hA,hM] = hasta.split("-");
+  document.getElementById("filtros-activos-desc").textContent =
+    `${MESES_FULL[parseInt(dM)]} ${dA} → ${MESES_FULL[parseInt(hM)]} ${hA} · ${partes.join(" · ")}`;
 }
 
-function getProvinciasSeleccionadas() {
-  return [...document.querySelectorAll("#check-provincias input:checked")].map(i => i.value);
-}
-
-function selAllProvincias(activo) {
-  document.querySelectorAll("#check-provincias input").forEach(i => i.checked = activo);
-}
-
-// ── Tipo OPEX/CAPEX ───────────────────────────────────────────
+// ── Tipo ──────────────────────────────────────────────────────
 function setTipo(t) {
   tipoFiltro = t;
-  document.getElementById("tipo-ambos").classList.toggle("active", t==="");
-  document.getElementById("tipo-opex").classList.toggle("active",  t==="OPEX");
-  document.getElementById("tipo-capex").classList.toggle("active", t==="CAPEX");
+  ["tipo-ambos","tipo-opex","tipo-capex"].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.toggle("active", el.id === "tipo-"+( t||"ambos"));
+  });
+  actualizarDesc();
 }
 
-// ── Modo PGN/Facturación ──────────────────────────────────────
+// ── Modo ──────────────────────────────────────────────────────
 function setModo(m) {
   modo = m;
   const esPGN = m === "pgn";
   document.getElementById("modo-fact").classList.toggle("active", !esPGN);
   document.getElementById("modo-pgn").classList.toggle("active",   esPGN);
-  document.getElementById("modo-badge").textContent = esPGN ? "PGN" : "$ Facturación";
-  document.getElementById("linea-title").textContent  = esPGN ? "Evolución mensual en PGN" : "Evolución mensual del total certificado";
-  document.getElementById("barras-title").textContent = esPGN ? "PGN por contrato y período" : "Certificado por contrato y período";
-  document.getElementById("prov-title").textContent   = esPGN ? "PGN por provincia" : "Certificado por provincia";
-  document.getElementById("items-title").textContent  = esPGN ? "Top 10 ítems por PGN" : "Top 10 ítems por monto certificado";
-  // Rerenderizar sin llamar al backend
+  document.getElementById("modo-badge").textContent    = esPGN ? "PGN" : "$ Facturación";
+  document.getElementById("linea-title").textContent   = esPGN ? "Evolución mensual en PGN" : "Evolución mensual del total certificado";
+  document.getElementById("barras-title").textContent  = esPGN ? "PGN por contrato y período" : "Certificado por contrato y período";
+  document.getElementById("prov-title").textContent    = esPGN ? "PGN por provincia" : "Certificado por provincia";
+  document.getElementById("items-title").textContent   = esPGN ? "Top 10 ítems por PGN" : "Top 10 ítems por monto certificado";
   destruirCharts();
   if (charts._linea)      renderLineaChart(charts._linea);
   if (charts._barras)     renderBarrasChart(charts._barras);
@@ -403,10 +514,9 @@ function setModo(m) {
 
 // ── Fechas ────────────────────────────────────────────────────
 function poblarFiltrosFecha() {
-  const hoy   = new Date();
+  const hoy = new Date();
   const anioH = hoy.getFullYear();
   const mesH  = hoy.getMonth() + 1;
-
   ["desde-mes","hasta-mes"].forEach(id => {
     const sel = document.getElementById(id);
     for (let m = 1; m <= 12; m++)
@@ -437,42 +547,33 @@ function resetFiltros() {
   document.getElementById("hasta-mes").value  = String(hoy.getMonth()+1).padStart(2,"0");
   document.getElementById("hasta-anio").value = hoy.getFullYear();
   setTipo("");
-  selAllContratos(true);
-  selAllProvincias(true);
+  selAll("contratos",  true);
+  selAll("provincias", true);
   aplicar();
 }
 
-// ── Construir query string ────────────────────────────────────
-function buildQS() {
+// ── Query string ──────────────────────────────────────────────
+function buildQS(incluirFecha=true) {
   const { desde, hasta } = getRango();
-  const conts = getContratosSeleccionados();
-  const provs = getProvinciasSeleccionadas();
+  const conts = getChecked("check-contratos");
+  const provs = getChecked("check-provincias");
   const params = new URLSearchParams();
-  if (desde)     params.append("desde", desde);
-  if (hasta)     params.append("hasta", hasta);
-  if (tipoFiltro)params.append("tipo",  tipoFiltro);
+  if (incluirFecha && desde) params.append("desde", desde);
+  if (incluirFecha && hasta) params.append("hasta", hasta);
+  if (tipoFiltro)            params.append("tipo",  tipoFiltro);
   conts.forEach(k => params.append("contratos", k));
   provs.forEach(p => params.append("provincias", p));
   return params.toString() ? "?" + params.toString() : "";
 }
 
-function buildQSInteranual() {
-  const conts = getContratosSeleccionados();
-  const provs = getProvinciasSeleccionadas();
-  const params = new URLSearchParams();
-  if (tipoFiltro)params.append("tipo",  tipoFiltro);
-  conts.forEach(k => params.append("contratos", k));
-  provs.forEach(p => params.append("provincias", p));
-  return params.toString() ? "?" + params.toString() : "";
-}
-
-// ── Aplicar todos los filtros ─────────────────────────────────
+// ── Aplicar ───────────────────────────────────────────────────
 async function aplicar() {
   const { desde, hasta } = getRango();
   if (desde > hasta) { alert("El rango 'desde' no puede ser mayor que 'hasta'"); return; }
+  actualizarDesc();
 
-  const qs    = buildQS();
-  const qsInt = buildQSInteranual();
+  const qs    = buildQS(true);
+  const qsInt = buildQS(false);
 
   try {
     const [linea, barras, provincia, interanual, topItems] = await Promise.all([
@@ -483,7 +584,6 @@ async function aplicar() {
       get(`/analytics/top-items${qs}&limite=10`),
     ]);
 
-    // Guardar datos para rerenderizar al cambiar modo
     charts._linea      = linea;
     charts._barras     = barras;
     charts._provincia  = provincia;
@@ -497,7 +597,6 @@ async function aplicar() {
     renderProvinciaChart(provincia);
     renderInteranualChart(interanual);
     renderItemsChart(topItems);
-
   } catch(err) { console.error(err); }
 }
 
@@ -530,18 +629,18 @@ function renderKPIs(provincia) {
   document.getElementById("kpis").innerHTML = `
     <div class="kpi">
       <div class="kpi-label">Total ${esPGN()?"PGN":"facturado"} en el período</div>
-      <div class="kpi-val">${esPGN() ? Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : formatMonto(totalMonto)}</div>
+      <div class="kpi-val">${esPGN()?Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN":formatMonto(totalMonto)}</div>
     </div>
     <div class="kpi sec">
       <div class="kpi-label">Variación último mes</div>
       <div class="kpi-val" style="font-size:20px">${_varUltimoMes()}</div>
     </div>
-    ${provTop ? `
+    ${provTop?`
     <div class="kpi prov">
       <div class="kpi-label">Provincia líder</div>
-      <div class="kpi-val" style="font-size:18px">${provTop.provincia}</div>
-      <div style="font-size:11px;color:var(--gris-texto)">${esPGN() ? Number(provTop.pgn_total||0).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : formatMonto(provTop.monto_total)}</div>
-    </div>` : ""}
+      <div class="kpi-val">${provTop.provincia}</div>
+      <div style="font-size:11px;color:var(--gris-texto)">${esPGN()?Number(provTop.pgn_total||0).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN":formatMonto(provTop.monto_total)}</div>
+    </div>`:""}
   `;
 }
 
@@ -554,18 +653,18 @@ function _varUltimoMes() {
   if (!prev) return "—";
   const v = ((ult-prev)/prev*100).toFixed(1);
   const cls = v > 0 ? "color:#059669" : v < 0 ? "color:var(--rojo)" : "";
-  return `<span style="${cls}">${v > 0 ? "▲" : v < 0 ? "▼" : ""}${Math.abs(v)}%</span>`;
+  return `<span style="${cls}">${v>0?"▲":v<0?"▼":""}${Math.abs(v)}%</span>`;
 }
 
-// ── Gráfico de línea ──────────────────────────────────────────
+// ── Línea ─────────────────────────────────────────────────────
 function renderLineaChart(datos) {
   const ctx  = document.getElementById("chart-linea").getContext("2d");
   const lbls = datos.map(d=>{ const[a,m]=d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
   const vals = datos.map(d=>getVal(d,"monto_total","pgn_total"));
-  charts.linea = new Chart(ctx, {
+  charts.linea = new Chart(ctx,{
     type:"line",
     data:{labels:lbls,datasets:[{
-      label:esPGN()?"PGN":"Facturación", data:vals,
+      label:esPGN()?"PGN":"Facturación",data:vals,
       borderColor:"#DCA028",backgroundColor:"rgba(220,160,40,.08)",
       borderWidth:2.5,pointRadius:4,pointBackgroundColor:"#DCA028",
       pointBorderColor:"#fff",pointBorderWidth:2,tension:.35,fill:true,
@@ -578,7 +677,7 @@ function renderLineaChart(datos) {
   });
 }
 
-// ── Barras por contrato ───────────────────────────────────────
+// ── Barras ────────────────────────────────────────────────────
 function renderBarrasChart(datos) {
   const ctx       = document.getElementById("chart-barras").getContext("2d");
   const periodos  = [...new Set(datos.map(d=>d.periodo))].sort();
@@ -587,8 +686,7 @@ function renderBarrasChart(datos) {
   const datasets  = contratos.map((k,i)=>({
     label:k,
     data:periodos.map(p=>{ const r=datos.find(d=>d.periodo===p&&d.contrato===k); return r?getVal(r,"monto_total","pgn_total"):0; }),
-    backgroundColor:COLORES[i%COLORES.length]+"CC",
-    borderColor:COLORES[i%COLORES.length],
+    backgroundColor:COLORES[i%COLORES.length]+"CC",borderColor:COLORES[i%COLORES.length],
     borderWidth:1,borderRadius:4,
   }));
   charts.barras = new Chart(ctx,{
@@ -604,8 +702,8 @@ function renderBarrasChart(datos) {
 
 // ── Por provincia ─────────────────────────────────────────────
 function renderProvinciaChart(datos) {
-  const ctx = document.getElementById("chart-provincia").getContext("2d");
   const sorted = [...datos].sort((a,b)=>getVal(b,"monto_total","pgn_total")-getVal(a,"monto_total","pgn_total"));
+  const ctx = document.getElementById("chart-provincia").getContext("2d");
   charts.provincia = new Chart(ctx,{
     type:"bar",
     data:{
@@ -644,7 +742,6 @@ function renderInteranualChart(data) {
     <div class="leyenda-item"><div class="leyenda-dot" style="background:#787878;opacity:.5"></div>${anioAn||"Ant."}</div>
     <div class="leyenda-item"><div class="leyenda-dot" style="background:#059669"></div>Variación %</div>
   `;
-
   const ctx = document.getElementById("chart-interanual").getContext("2d");
   charts.interanual = new Chart(ctx,{
     data:{labels,datasets:[
@@ -694,9 +791,9 @@ async function cargarEstado() {
     const conts = [...new Set(estadoData.map(r=>r.contrato))].sort();
     const anios = [...new Set(estadoData.map(r=>r.periodo.split("-")[0]))].sort().reverse();
     const meses = [...new Set(estadoData.map(r=>r.periodo.split("-")[1]))].sort();
-    const selK = document.getElementById("filtro-estado-k");
-    const selA = document.getElementById("filtro-estado-anio");
-    const selM = document.getElementById("filtro-estado-mes");
+    const selK  = document.getElementById("filtro-estado-k");
+    const selA  = document.getElementById("filtro-estado-anio");
+    const selM  = document.getElementById("filtro-estado-mes");
     selK.innerHTML = '<option value="">Todos los contratos</option>';
     selA.innerHTML = '<option value="">Todos los años</option>';
     selM.innerHTML = '<option value="">Todos los meses</option>';
@@ -717,12 +814,8 @@ function renderEstado() {
 
   const filtrado = estadoData.filter(r=>{
     const [rA,rM]=r.periodo.split("-");
-    if(k&&r.contrato!==k)return false;
-    if(anio&&rA!==anio)return false;
-    if(mes&&rM!==mes)return false;
-    if(tipo==="pendiente"&&r.cargado)return false;
-    if(tipo==="cargado"&&!r.cargado)return false;
-    return true;
+    return (!k||r.contrato===k)&&(!anio||rA===anio)&&(!mes||rM===mes)&&
+           (tipo!=="pendiente"||!r.cargado)&&(tipo!=="cargado"||r.cargado);
   });
 
   const totalPend=filtrado.filter(r=>!r.cargado).length;
@@ -734,20 +827,19 @@ function renderEstado() {
 
   const total=filtrado.length, totalPag=Math.ceil(total/ESTADO_POR_PAG)||1;
   const inicio=(estadoPagina-1)*ESTADO_POR_PAG;
-  const pagina=filtrado.slice(inicio,inicio+ESTADO_POR_PAG);
+  const pag=filtrado.slice(inicio,inicio+ESTADO_POR_PAG);
 
   document.getElementById("estado-pag-info").textContent=
     total?`Mostrando ${inicio+1}–${Math.min(inicio+ESTADO_POR_PAG,total)} de ${total}`:"";
   document.getElementById("estado-btn-prev").disabled=estadoPagina<=1;
   document.getElementById("estado-btn-next").disabled=estadoPagina>=totalPag;
 
-  if(!pagina.length){
+  if(!pag.length){
     document.getElementById("body-estado").innerHTML=
       '<tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
     return;
   }
-
-  document.getElementById("body-estado").innerHTML=pagina.map(r=>{
+  document.getElementById("body-estado").innerHTML=pag.map(r=>{
     const hoy=new Date();
     const [aP,mP]=r.periodo.split("-").map(Number);
     const esPasado=aP<hoy.getFullYear()||(aP===hoy.getFullYear()&&mP<hoy.getMonth()+1);
@@ -758,8 +850,7 @@ function renderEstado() {
       <td><strong>${r.periodo}</strong></td>
       <td><span class="badge badge-info">${r.contrato}</span></td>
       <td style="text-align:center"><span class="badge ${bCls}">${bTxt}</span></td>
-      <td>${r.usuario||"—"}</td>
-      <td>${r.cargado_en||"—"}</td>
+      <td>${r.usuario||"—"}</td><td>${r.cargado_en||"—"}</td>
       <td style="text-align:right">${r.filas_cargadas!==null?Number(r.filas_cargadas).toLocaleString("es-AR"):"—"}</td>
     </tr>`;
   }).join("");
