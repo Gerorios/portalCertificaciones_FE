@@ -10,56 +10,119 @@
     .fila-clickable { cursor:pointer; }
     .fila-clickable:hover td { background:var(--primario-light) !important; }
 
-    /* KPIs interanuales */
+    /* KPIs */
     .kpi-interanual {
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
       gap:12px;
       margin-bottom:1.25rem;
     }
     .kpi-card {
-      background:var(--blanco);
-      border:1px solid var(--gris-borde);
-      border-radius:var(--radio);
-      padding:1.1rem 1.25rem;
-      box-shadow:var(--sombra);
-      border-left:4px solid var(--primario);
+      background:var(--blanco); border:1px solid var(--gris-borde);
+      border-radius:var(--radio); padding:1.1rem 1.25rem;
+      box-shadow:var(--sombra); border-left:4px solid var(--primario);
     }
-    .kpi-card.secundario { border-left-color: var(--secundario); }
+    .kpi-card.sec  { border-left-color:var(--secundario); }
+    .kpi-card.verde{ border-left-color:#059669; }
     .kpi-label { font-size:11px; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
     .kpi-val   { font-size:22px; font-weight:700; color:var(--negro); margin-bottom:4px; }
     .kpi-comp  { font-size:12px; color:var(--gris-texto); }
-    .var-badge {
-      display:inline-block; font-size:11px; font-weight:600;
-      padding:2px 8px; border-radius:20px; margin-left:6px;
+    .var-badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; margin-left:6px; }
+    .var-up    { background:#D1FAE5; color:#065F46; }
+    .var-down  { background:var(--rojo-light); color:var(--rojo); }
+    .var-flat  { background:var(--gris-bg); color:var(--gris-texto); }
+
+    /* Barra de filtros de gráficos */
+    .filtro-graficos {
+      background:var(--blanco); border:1px solid var(--gris-borde);
+      border-radius:var(--radio); padding:.9rem 1.25rem;
+      box-shadow:var(--sombra); margin-bottom:1.25rem;
+      display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;
     }
-    .var-up   { background:#D1FAE5; color:#065F46; }
-    .var-down { background:var(--rojo-light); color:var(--rojo); }
-    .var-flat { background:var(--gris-bg); color:var(--gris-texto); }
+    .fg-grupo { display:flex; flex-direction:column; gap:4px; }
+    .fg-grupo label { font-size:11px; font-weight:500; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.3px; margin:0; }
+    .fg-sep { font-size:16px; color:var(--gris-texto); padding-bottom:4px; }
+
+    /* Total del período */
+    .total-periodo {
+      padding-bottom:4px;
+      font-size:13px; font-weight:600; color:var(--primario);
+    }
+    .total-periodo span { font-size:11px; color:var(--gris-texto); font-weight:400; display:block; }
+
+    /* Botón dropdown contratos */
+    .btn-contratos-drop {
+      display:flex; align-items:center; gap:6px;
+      padding:5px 12px; border:1px solid var(--gris-borde);
+      border-radius:20px; font-size:12px; font-weight:500;
+      background:var(--blanco); color:var(--secundario);
+      cursor:pointer; transition:all .15s; position:relative;
+    }
+    .btn-contratos-drop:hover { border-color:var(--primario); color:var(--primario); }
+    .btn-contratos-drop.activo { background:var(--primario-light); border-color:var(--primario); color:var(--primario-dark); }
+    .cont-badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:18px; height:18px; border-radius:50%;
+      background:var(--primario); color:var(--blanco);
+      font-size:10px; font-weight:700;
+    }
+
+    /* Dropdown contratos */
+    .contratos-dropdown {
+      display:none; position:absolute;
+      top:calc(100% + 8px); left:0; z-index:100;
+      background:var(--blanco); border:1px solid var(--gris-borde);
+      border-radius:var(--radio); box-shadow:0 8px 24px rgba(0,0,0,.12);
+      padding:1rem; min-width:200px;
+    }
+    .contratos-dropdown.open { display:block; }
+    .cont-drop-header { font-size:11px; font-weight:600; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.5px; margin-bottom:.6rem; }
+    .cont-checks { display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto; }
+    .cont-check-item {
+      display:flex; align-items:center; gap:8px;
+      font-size:13px; cursor:pointer;
+      padding:3px 6px; border-radius:6px;
+      transition:background .1s; user-select:none;
+    }
+    .cont-check-item:hover { background:var(--gris-bg); }
+    .cont-check-item input { width:14px; height:14px; accent-color:var(--primario); cursor:pointer; }
+    .cont-drop-footer {
+      border-top:1px solid var(--gris-borde); padding-top:.75rem;
+      margin-top:.75rem; display:flex; gap:6px; justify-content:space-between;
+    }
+    .cont-sel-btn {
+      font-size:11px; padding:2px 8px;
+      border:1px solid var(--gris-borde); border-radius:12px;
+      background:var(--blanco); cursor:pointer; color:var(--gris-texto);
+    }
+    .cont-sel-btn:hover { color:var(--primario); border-color:var(--primario); }
+    .btn-aplicar-cont {
+      font-size:12px; padding:4px 12px;
+      background:var(--primario); color:var(--blanco);
+      border:none; border-radius:8px; cursor:pointer; font-weight:600;
+    }
+
+    /* Wrapper relativo para el dropdown */
+    .drop-wrapper { position:relative; }
+    .total-periodo span { font-size:11px; color:var(--gris-texto); font-weight:400; display:block; }
 
     /* Gráficos */
     .charts-row {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:1.25rem;
-      margin-bottom:1.25rem;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:1.25rem; margin-bottom:1.25rem;
     }
     .chart-card {
-      background:var(--blanco);
-      border:1px solid var(--gris-borde);
-      border-radius:var(--radio);
-      padding:1.25rem;
-      box-shadow:var(--sombra);
+      background:var(--blanco); border:1px solid var(--gris-borde);
+      border-radius:var(--radio); padding:1.25rem; box-shadow:var(--sombra);
     }
-    .chart-card.full { grid-column:1/-1; }
     .chart-title { font-size:14px; font-weight:600; margin-bottom:.25rem; }
     .chart-sub   { font-size:12px; color:var(--gris-texto); margin-bottom:1rem; }
     .chart-wrap  { position:relative; height:260px; }
 
-    /* Toggle PGN/Facturación */
-    .toggle-bar { display:flex; gap:6px; margin-bottom:1rem; }
+    /* Toggle */
+    .toggle-bar { display:flex; gap:6px; }
     .toggle-btn {
-      padding:4px 14px; border-radius:20px; font-size:12px; font-weight:500;
+      padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500;
       border:1px solid var(--gris-borde); background:var(--blanco);
       cursor:pointer; transition:all .15s;
     }
@@ -91,8 +154,9 @@
     .modal-metric-label { font-size:11px; color:var(--gris-texto); margin-bottom:3px; }
     .modal-metric-val   { font-size:18px; font-weight:600; }
 
-    /* Pendientes */
-    .modal-pend { z-index:300; }
+    @media (max-width:800px) {
+      .charts-row { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
@@ -108,30 +172,81 @@
       <a href="upload.html" class="btn btn-primary">+ Nueva certificación</a>
     </div>
 
-    <!-- KPIs interanuales -->
+    <!-- KPIs interanuales del mes actual -->
     <div class="kpi-interanual" id="kpis-interanual">
       <div class="kpi-card"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
     </div>
 
-    <!-- Gráficos -->
-    <div class="charts-row">
-      <!-- Evolución mensual -->
-      <div class="chart-card">
-        <div class="chart-title">Evolución mensual</div>
-        <div class="chart-sub" id="linea-sub">Últimos 12 meses</div>
-        <div class="chart-wrap"><canvas id="chart-linea"></canvas></div>
+    <!-- Filtros de gráficos -->
+    <div class="filtro-graficos" id="filtros-bar-dash" style="position:relative">
+
+      <!-- Dropdown multiselect de contratos -->
+      <div class="drop-wrapper">
+        <button class="btn-contratos-drop" id="btn-cont-drop" onclick="toggleContratosDropdown()">
+          <span id="btn-cont-label">Contratos</span>
+          <span class="cont-badge" id="cont-badge" style="display:none">0</span>
+          <span id="cont-arrow">▾</span>
+        </button>
+        <div class="contratos-dropdown" id="contratos-dropdown">
+          <div class="cont-drop-header">Contratos</div>
+          <div class="cont-checks" id="cont-checks">
+            <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
+          </div>
+          <div class="cont-drop-footer">
+            <div style="display:flex;gap:6px">
+              <button class="cont-sel-btn" onclick="selAllContratosDash(true)">Todos</button>
+              <button class="cont-sel-btn" onclick="selAllContratosDash(false)">Ninguno</button>
+            </div>
+            <button class="btn-aplicar-cont" onclick="aplicarContratosDrop()">Aplicar</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Interanual -->
+      <div class="fg-sep" style="width:1px;height:24px;background:var(--gris-borde)"></div>
+
+      <div class="fg-grupo">
+        <label>Desde</label>
+        <div style="display:flex;gap:6px">
+          <select id="fg-desde-mes" style="width:auto"></select>
+          <select id="fg-desde-anio" style="width:auto"></select>
+        </div>
+      </div>
+      <div class="fg-sep">→</div>
+      <div class="fg-grupo">
+        <label>Hasta</label>
+        <div style="display:flex;gap:6px">
+          <select id="fg-hasta-mes" style="width:auto"></select>
+          <select id="fg-hasta-anio" style="width:auto"></select>
+        </div>
+      </div>
+
+      <div class="fg-sep" style="width:1px;height:24px;background:var(--gris-borde)"></div>
+
+      <div class="toggle-bar">
+        <button class="toggle-btn active" id="btn-fact" onclick="setModo('facturacion')">$ Facturación</button>
+        <button class="toggle-btn" id="btn-pgn" onclick="setModo('pgn')">PGN</button>
+      </div>
+
+      <button class="btn btn-primary" onclick="aplicarFiltroGraficos()">Aplicar</button>
+      <button class="btn" onclick="resetFiltroGraficos()">↺</button>
+
+      <div class="total-periodo" id="total-periodo" style="margin-left:auto">
+        <span>Total en el período</span>—
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title" id="linea-title">Evolución mensual</div>
+        <div class="chart-sub"  id="linea-sub">Total en el período seleccionado</div>
+        <div class="chart-wrap"><canvas id="chart-linea"></canvas></div>
+      </div>
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem">
           <div>
             <div class="chart-title">Interanual</div>
             <div class="chart-sub" id="interanual-sub">Año actual vs anterior</div>
-          </div>
-          <div class="toggle-bar">
-            <button class="toggle-btn active" id="btn-fact" onclick="setModo('facturacion')">$</button>
-            <button class="toggle-btn" id="btn-pgn" onclick="setModo('pgn')">PGN</button>
           </div>
         </div>
         <div class="leyenda" id="leyenda-interanual"></div>
@@ -144,9 +259,9 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
         <h2>Total facturado por período</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="filtro-anio"     style="width:auto" onchange="aplicarFiltros()"><option value="">Todos los años</option></select>
-          <select id="filtro-mes"      style="width:auto" onchange="aplicarFiltros()"><option value="">Todos los meses</option></select>
-          <select id="filtro-contrato" style="width:auto" onchange="aplicarFiltros()"><option value="">Todos los contratos</option></select>
+          <select id="filtro-anio"     style="width:auto" onchange="aplicarFiltrosTabla()"><option value="">Todos los años</option></select>
+          <select id="filtro-mes"      style="width:auto" onchange="aplicarFiltrosTabla()"><option value="">Todos los meses</option></select>
+          <select id="filtro-contrato" style="width:auto" onchange="aplicarFiltrosTabla()"><option value="">Todos los contratos</option></select>
         </div>
       </div>
       <div class="tabla-wrap">
@@ -172,7 +287,7 @@
       </div>
     </div>
 
-    <!-- Historial reciente -->
+    <!-- Historial -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <h2>Últimas certificaciones cargadas</h2>
@@ -228,7 +343,7 @@
 </div>
 
 <!-- Modal pendientes -->
-<div class="modal-bg modal-pend" id="modal-pendientes">
+<div class="modal-bg" id="modal-pendientes" style="z-index:300">
   <div class="modal" style="max-width:520px;text-align:center">
     <div style="font-size:52px;margin-bottom:.75rem">⚠️</div>
     <h2 style="margin-bottom:.5rem;font-size:18px">Certificaciones pendientes</h2>
@@ -252,121 +367,232 @@
 Auth.requireLogin();
 renderSidebar("dashboard");
 
-// Redirigir gerente
 if (Auth.getUser()?.rol === "gerente") window.location.href = "analytics.html";
 
-const MESES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
-               "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const MESES   = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const MESES_C = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const POR_PAG = 15;
 
 const user = Auth.getUser();
 document.getElementById("titulo-page").textContent =
-  "Dashboard — " + (user.rol === "admin" ? "Administrador" : (user.contratos||[]).join(" · "));
+  "Dashboard — " + (user.rol==="admin" ? "Administrador" : (user.contratos||[]).join(" · "));
 
-let datosResumen    = [];
-let datosFiltrados  = [];
-let detalleActual   = [];
-let datosInteranual = null;
-let modo            = "facturacion";
-let pagina          = 1;
-let charts          = {};
+let datosResumen   = [];
+let datosFiltrados = [];
+let detalleActual  = [];
+let interanualData = null;
+let modo           = "facturacion";
+let pagina         = 1;
+let charts         = {};
 
-// ── Carga inicial ─────────────────────────────────────────────
-async function cargarDatos() {
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  poblarFiltrosFecha();
+
+  // Cargar contratos para el dropdown multiselect
   try {
-    const contratos = (user.contratos||[]);
-    const qContrato = contratos.length === 1 ? `?contrato=${contratos[0]}` : "";
+    const contratos = await get("/analytics/contratos");
+    renderContratosDropdown(contratos);
+  } catch(e) {}
 
+  const { desde, hasta } = getFiltroGraficos();
+
+  try {
     const [resumen, historial, kpis, linea, interanual] = await Promise.all([
       get("/certificaciones/resumen"),
       get("/certificaciones/historial"),
       get("/analytics/kpis-jefe"),
-      get(`/analytics/evolucion-mensual?desde=${_hace12meses()}&hasta=${_mesActual()}${contratos.length===1?"&contrato="+contratos[0]:""}`),
-      get(`/analytics/interanual${qContrato}`),
+      get(`/analytics/evolucion-mensual?desde=${desde}&hasta=${hasta}`),
+      get("/analytics/interanual"),
     ]);
 
     renderKPIs(kpis);
-    renderLineaChart(linea);
-    datosInteranual = interanual;
-    renderInteranualChart(interanual);
+    renderGraficos(linea, interanual);
 
     datosResumen = agruparResumen(resumen);
-    poblarFiltros(datosResumen);
-    aplicarFiltros();
+    poblarFiltrosTabla(datosResumen);
+    aplicarFiltrosTabla();
     renderHistorial(historial.slice(0, 8));
     verificarPendientes(resumen);
-
   } catch(err) { console.error(err); }
 }
 
-function _hace12meses() {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 11);
-  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
-}
-function _mesActual() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+// ── Filtros de gráficos ───────────────────────────────────────
+function poblarFiltrosFecha() {
+  const hoy   = new Date();
+  const anioH = hoy.getFullYear();
+  const mesH  = hoy.getMonth() + 1;
+
+  ["fg-desde-mes","fg-hasta-mes"].forEach(id => {
+    const sel = document.getElementById(id);
+    for (let m = 1; m <= 12; m++)
+      sel.appendChild(new Option(MESES[m], String(m).padStart(2,"0")));
+  });
+  ["fg-desde-anio","fg-hasta-anio"].forEach(id => {
+    const sel = document.getElementById(id);
+    for (let a = anioH; a >= 2025; a--)
+      sel.appendChild(new Option(a, a));
+  });
+  // Defaults: últimos 12 meses
+  const hace12 = new Date(); hace12.setMonth(hace12.getMonth() - 11);
+  document.getElementById("fg-desde-mes").value  = String(hace12.getMonth()+1).padStart(2,"0");
+  document.getElementById("fg-desde-anio").value = hace12.getFullYear();
+  document.getElementById("fg-hasta-mes").value  = String(mesH).padStart(2,"0");
+  document.getElementById("fg-hasta-anio").value = anioH;
 }
 
-// ── KPIs interanuales ─────────────────────────────────────────
-function renderKPIs(k) {
-  if (!k || !k.monto_actual) {
-    document.getElementById("kpis-interanual").innerHTML =
-      '<div class="kpi-card"><div class="kpi-label">Sin datos del mes actual</div><div class="kpi-val">—</div></div>';
-    return;
+function getFiltroGraficos() {
+  return {
+    desde:     `${document.getElementById("fg-desde-anio").value}-${document.getElementById("fg-desde-mes").value}`,
+    hasta:     `${document.getElementById("fg-hasta-anio").value}-${document.getElementById("fg-hasta-mes").value}`,
+    contratos: getContratosChecked(),
+  };
+}
+
+// ── Dropdown multiselect contratos ────────────────────────────
+function renderContratosDropdown(contratos) {
+  document.getElementById("cont-checks").innerHTML = contratos.map(k => `
+    <label class="cont-check-item">
+      <input type="checkbox" value="${k}" checked onchange="actualizarBadgeCont()">
+      ${k}
+    </label>
+  `).join("");
+  actualizarBadgeCont();
+}
+
+function toggleContratosDropdown() {
+  const dd  = document.getElementById("contratos-dropdown");
+  const btn = document.getElementById("btn-cont-drop");
+  const open = dd.classList.toggle("open");
+  btn.classList.toggle("activo", open);
+  document.getElementById("cont-arrow").textContent = open ? "▴" : "▾";
+}
+
+function cerrarContratosDropdown() {
+  document.getElementById("contratos-dropdown").classList.remove("open");
+  document.getElementById("btn-cont-drop").classList.remove("activo");
+  document.getElementById("cont-arrow").textContent = "▾";
+}
+
+function aplicarContratosDrop() {
+  cerrarContratosDropdown();
+  aplicarFiltroGraficos();
+}
+
+function selAllContratosDash(activo) {
+  document.querySelectorAll("#cont-checks input").forEach(i => i.checked = activo);
+  actualizarBadgeCont();
+}
+
+function getContratosChecked() {
+  return [...document.querySelectorAll("#cont-checks input:checked")].map(i => i.value);
+}
+
+function actualizarBadgeCont() {
+  const sel   = getContratosChecked();
+  const total = document.querySelectorAll("#cont-checks input").length;
+  const excl  = total - sel.length;
+  const badge = document.getElementById("cont-badge");
+  badge.style.display = excl > 0 ? "inline-flex" : "none";
+  badge.textContent   = excl;
+  document.getElementById("btn-cont-drop").classList.toggle("activo", excl > 0);
+  document.getElementById("btn-cont-label").textContent =
+    sel.length === total ? "Contratos" :
+    sel.length === 0 ? "Sin contratos" :
+    sel.join(", ");
+}
+
+function resetFiltroGraficos() {
+  const hoy = new Date();
+  const hace12 = new Date(); hace12.setMonth(hace12.getMonth() - 11);
+  document.getElementById("fg-desde-mes").value  = String(hace12.getMonth()+1).padStart(2,"0");
+  document.getElementById("fg-desde-anio").value = hace12.getFullYear();
+  document.getElementById("fg-hasta-mes").value  = String(hoy.getMonth()+1).padStart(2,"0");
+  document.getElementById("fg-hasta-anio").value = hoy.getFullYear();
+  selAllContratosDash(true);
+  aplicarFiltroGraficos();
+}
+
+async function aplicarFiltroGraficos() {
+  const { desde, hasta, contratos } = getFiltroGraficos();
+  if (desde > hasta) { alert("El rango 'desde' no puede ser mayor que 'hasta'"); return; }
+
+  const params = new URLSearchParams();
+  params.append("desde", desde);
+  params.append("hasta", hasta);
+  contratos.forEach(k => params.append("contratos", k));
+  const qs    = "?" + params.toString();
+
+  const paramsInt = new URLSearchParams();
+  contratos.forEach(k => paramsInt.append("contratos", k));
+  const qsInt = paramsInt.toString() ? "?" + paramsInt.toString() : "";
+
+  try {
+    const [linea, interanual] = await Promise.all([
+      get(`/analytics/evolucion-mensual${qs}`),
+      get(`/analytics/interanual${qsInt}`),
+    ]);
+    renderGraficos(linea, interanual);
+  } catch(err) { console.error(err); }
+}
+
+// ── Toggle modo ───────────────────────────────────────────────
+function setModo(nuevoModo) {
+  modo = nuevoModo;
+  document.getElementById("btn-fact").classList.toggle("active", modo==="facturacion");
+  document.getElementById("btn-pgn").classList.toggle("active",  modo==="pgn");
+  document.getElementById("linea-title").textContent = modo==="pgn" ? "Evolución mensual (PGN)" : "Evolución mensual";
+  if (charts.linea)      { charts.linea.destroy();      delete charts.linea; }
+  if (charts.interanual) { charts.interanual.destroy(); delete charts.interanual; }
+  if (interanualData) renderGraficos(charts._lineaData || [], interanualData);
+}
+
+// ── Renderizar gráficos ───────────────────────────────────────
+function renderGraficos(linea, interanual) {
+  interanualData     = interanual;
+  charts._lineaData  = linea;
+
+  // Total del período
+  const totalPeriodo = linea.reduce((s,d) => s + Number(d.monto_total||0), 0);
+  const totalPGN     = linea.reduce((s,d) => s + Number(d.pgn_total||0), 0);
+  const el = document.getElementById("total-periodo");
+  if (modo === "pgn") {
+    el.innerHTML = `<span>Total PGN en el período</span>${Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})} PGN`;
+  } else {
+    el.innerHTML = `<span>Total facturado en el período</span>${formatMonto(totalPeriodo)}`;
   }
 
-  const hoy    = new Date();
-  const mesNom = MESES[hoy.getMonth()+1];
-  const anioAct= hoy.getFullYear();
-  const anioAnt= anioAct - 1;
+  if (charts.linea)      { charts.linea.destroy();      delete charts.linea; }
+  if (charts.interanual) { charts.interanual.destroy(); delete charts.interanual; }
 
-  function varBadge(v) {
-    if (v === null || v === undefined) return "";
-    const cls = v > 0 ? "var-up" : v < 0 ? "var-down" : "var-flat";
-    const ico = v > 0 ? "▲" : v < 0 ? "▼" : "—";
-    return `<span class="var-badge ${cls}">${ico} ${Math.abs(v)}%</span>`;
-  }
-
-  document.getElementById("kpis-interanual").innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-label">Facturación ${mesNom} ${anioAct}</div>
-      <div class="kpi-val">${formatMonto(k.monto_actual)} ${varBadge(k.var_monto)}</div>
-      <div class="kpi-comp">vs ${mesNom} ${anioAnt}: ${k.monto_anterior ? formatMonto(k.monto_anterior) : "—"}</div>
-    </div>
-    <div class="kpi-card secundario">
-      <div class="kpi-label">PGN ${mesNom} ${anioAct}</div>
-      <div class="kpi-val">${k.pgn_actual ? Number(k.pgn_actual).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : "—"} ${varBadge(k.var_pgn)}</div>
-      <div class="kpi-comp">vs ${mesNom} ${anioAnt}: ${k.pgn_anterior ? Number(k.pgn_anterior).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : "—"}</div>
-    </div>
-    <div class="kpi-card" style="border-left-color:#059669">
-      <div class="kpi-label">Líneas certificadas este mes</div>
-      <div class="kpi-val" style="color:#059669">${Number(k.lineas_actual||0).toLocaleString("es-AR")}</div>
-      <div class="kpi-comp">Contratos: ${(k.contratos||[]).join(", ")}</div>
-    </div>
-  `;
+  renderLineaChart(linea);
+  renderInteranualChart(interanual);
 }
 
 // ── Gráfico de línea ──────────────────────────────────────────
 function renderLineaChart(datos) {
-  if (charts.linea) { charts.linea.destroy(); delete charts.linea; }
-  const ctx   = document.getElementById("chart-linea").getContext("2d");
-  const lbls  = datos.map(d => { const[a,m]=d.periodo.split("-"); return MESES_C[parseInt(m)]+" "+a.slice(2); });
-  const vals  = datos.map(d => Number(d.monto_total||0));
+  const ctx  = document.getElementById("chart-linea").getContext("2d");
+  const lbls = datos.map(d => { const[a,m]=d.periodo.split("-"); return MESES_C[parseInt(m)]+" "+a.slice(2); });
+  const vals = datos.map(d => modo==="pgn" ? Number(d.pgn_total||0) : Number(d.monto_total||0));
+
+  const fmtY = modo==="pgn"
+    ? v => (v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K")+" PGN"
+    : v => "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K");
+
   charts.linea = new Chart(ctx, {
     type:"line",
     data:{labels:lbls, datasets:[{
-      label:"Facturación", data:vals,
+      label: modo==="pgn"?"PGN":"Facturación",
+      data:vals,
       borderColor:"#DCA028", backgroundColor:"rgba(220,160,40,.08)",
       borderWidth:2.5, pointRadius:4, pointBackgroundColor:"#DCA028",
       pointBorderColor:"#fff", pointBorderWidth:2, tension:.35, fill:true,
     }]},
     options:{responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>" "+formatMonto(c.raw)}}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c => modo==="pgn" ? " "+Number(c.raw).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : " "+formatMonto(c.raw)}}},
       scales:{
-        y:{beginAtZero:true, ticks:{callback:v=>"$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"),font:{size:10}}, grid:{color:"rgba(0,0,0,.05)"}},
+        y:{beginAtZero:true, ticks:{callback:fmtY,font:{size:10}}, grid:{color:"rgba(0,0,0,.05)"}},
         x:{ticks:{font:{size:10},maxRotation:45}, grid:{display:false}}
       }
     }
@@ -374,29 +600,19 @@ function renderLineaChart(datos) {
 }
 
 // ── Gráfico interanual ────────────────────────────────────────
-function setModo(nuevoModo) {
-  modo = nuevoModo;
-  document.getElementById("btn-fact").classList.toggle("active", modo==="facturacion");
-  document.getElementById("btn-pgn").classList.toggle("active",  modo==="pgn");
-  if (charts.interanual) { charts.interanual.destroy(); delete charts.interanual; }
-  if (datosInteranual) renderInteranualChart(datosInteranual);
-}
-
 function renderInteranualChart(data) {
-  if (!data || !data.meses || !data.meses.length) return;
-  if (charts.interanual) { charts.interanual.destroy(); delete charts.interanual; }
-
+  if (!data||!data.meses||!data.meses.length) return;
   const meses  = data.meses;
   const anioA  = data.anio_actual;
   const anioAn = data.anio_anterior;
-  const esPGN  = modo === "pgn";
+  const esPGN  = modo==="pgn";
   const labels = meses.map(d => MESES_C[d.mes]);
   const valA   = meses.map(d => esPGN ? d.pgn_actual   : d.monto_actual);
   const valAn  = meses.map(d => esPGN ? d.pgn_anterior : d.monto_anterior);
   const varD   = meses.map(d => esPGN ? d.var_pgn      : d.var_monto);
 
   document.getElementById("interanual-sub").textContent =
-    `${anioA} vs ${anioAn} — ${esPGN?"PGN":"Facturación ($)"}`;
+    `${anioA} vs ${anioAn||"año anterior"} — ${esPGN?"PGN":"Facturación ($)"}`;
 
   document.getElementById("leyenda-interanual").innerHTML = `
     <div class="leyenda-item"><div class="leyenda-dot" style="background:#DCA028"></div>${anioA}</div>
@@ -411,18 +627,20 @@ function renderInteranualChart(data) {
   const ctx = document.getElementById("chart-interanual").getContext("2d");
   charts.interanual = new Chart(ctx, {
     data:{labels, datasets:[
-      {type:"bar", label:String(anioA),  data:valA,  backgroundColor:"#DCA028CC", borderColor:"#DCA028", borderWidth:1, borderRadius:3, yAxisID:"y"},
-      {type:"bar", label:String(anioAn||"Anterior"), data:valAn, backgroundColor:"#78787866", borderColor:"#787878", borderWidth:1, borderRadius:3, yAxisID:"y"},
-      {type:"line", label:"Var. %", data:varD, borderColor:"#059669", backgroundColor:"transparent", borderWidth:2,
-        pointRadius:4, pointBackgroundColor:varD.map(v=>v===null?"#999":v>=0?"#059669":"#DC2626"),
+      {type:"bar",  label:String(anioA),  data:valA,  backgroundColor:"#DCA028CC", borderColor:"#DCA028", borderWidth:1, borderRadius:3, yAxisID:"y"},
+      {type:"bar",  label:String(anioAn||"Anterior"), data:valAn, backgroundColor:"#78787866", borderColor:"#787878", borderWidth:1, borderRadius:3, yAxisID:"y"},
+      {type:"line", label:"Var. %", data:varD, borderColor:"#059669", backgroundColor:"transparent",
+        borderWidth:2, pointRadius:4,
+        pointBackgroundColor:varD.map(v=>v===null?"#999":v>=0?"#059669":"#DC2626"),
         pointBorderColor:"#fff", pointBorderWidth:1.5, tension:.3, yAxisID:"y2"}
     ]},
     options:{responsive:true, maintainAspectRatio:false,
       plugins:{legend:{position:"top",labels:{font:{size:10},boxWidth:10}},
         tooltip:{callbacks:{label:c=>{
           if(c.dataset.label==="Var. %") return ` Var: ${c.raw!==null?c.raw+"%":"—"}`;
-          return esPGN ? ` ${c.dataset.label}: ${c.raw!==null?Number(c.raw).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN":"—"}`
-                       : ` ${c.dataset.label}: ${c.raw!==null?formatMonto(c.raw):"—"}`;
+          return esPGN
+            ? ` ${c.dataset.label}: ${c.raw!==null?Number(c.raw).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN":"—"}`
+            : ` ${c.dataset.label}: ${c.raw!==null?formatMonto(c.raw):"—"}`;
         }}}
       },
       scales:{
@@ -434,19 +652,57 @@ function renderInteranualChart(data) {
   });
 }
 
-// ── Tabla de resumen ──────────────────────────────────────────
+// ── KPIs del mes actual ───────────────────────────────────────
+function renderKPIs(k) {
+  if (!k||!k.monto_actual) {
+    document.getElementById("kpis-interanual").innerHTML =
+      '<div class="kpi-card"><div class="kpi-label">Sin datos del mes actual</div><div class="kpi-val">—</div></div>';
+    return;
+  }
+  const hoy    = new Date();
+  const mesNom = MESES[hoy.getMonth()+1];
+  const anioA  = hoy.getFullYear();
+  const anioAn = anioA - 1;
+
+  function vb(v) {
+    if (v===null||v===undefined) return "";
+    const cls = v>0?"var-up":v<0?"var-down":"var-flat";
+    const ico = v>0?"▲":v<0?"▼":"—";
+    return `<span class="var-badge ${cls}">${ico} ${Math.abs(v)}%</span>`;
+  }
+
+  document.getElementById("kpis-interanual").innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Facturación ${mesNom} ${anioA}</div>
+      <div class="kpi-val">${formatMonto(k.monto_actual)} ${vb(k.var_monto)}</div>
+      <div class="kpi-comp">vs ${mesNom} ${anioAn}: ${k.monto_anterior?formatMonto(k.monto_anterior):"—"}</div>
+    </div>
+    <div class="kpi-card sec">
+      <div class="kpi-label">PGN ${mesNom} ${anioA}</div>
+      <div class="kpi-val">${k.pgn_actual?Number(k.pgn_actual).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN":"—"} ${vb(k.var_pgn)}</div>
+      <div class="kpi-comp">vs ${mesNom} ${anioAn}: ${k.pgn_anterior?Number(k.pgn_anterior).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN":"—"}</div>
+    </div>
+    <div class="kpi-card verde">
+      <div class="kpi-label">Líneas certificadas este mes</div>
+      <div class="kpi-val" style="color:#059669">${Number(k.lineas_actual||0).toLocaleString("es-AR")}</div>
+      <div class="kpi-comp">Contratos: ${(k.contratos||[]).join(", ")}</div>
+    </div>
+  `;
+}
+
+// ── Tabla ─────────────────────────────────────────────────────
 function agruparResumen(datos) {
   const mapa = {};
   datos.forEach(r => {
     const key = r.periodo+"__"+r.contrato;
-    if (!mapa[key]) mapa[key] = {periodo:r.periodo, contrato:r.contrato, lineas:0, monto_total:0};
+    if (!mapa[key]) mapa[key] = {periodo:r.periodo,contrato:r.contrato,lineas:0,monto_total:0};
     mapa[key].lineas      += Number(r.lineas||0);
     mapa[key].monto_total += Number(r.monto_total||0);
   });
-  return Object.values(mapa).sort((a,b) => b.periodo.localeCompare(a.periodo)||a.contrato.localeCompare(b.contrato));
+  return Object.values(mapa).sort((a,b)=>b.periodo.localeCompare(a.periodo)||a.contrato.localeCompare(b.contrato));
 }
 
-function poblarFiltros(datos) {
+function poblarFiltrosTabla(datos) {
   const anios     = [...new Set(datos.map(r=>r.periodo.split("-")[0]))].sort().reverse();
   const meses     = [...new Set(datos.map(r=>r.periodo.split("-")[1]))].sort();
   const contratos = [...new Set(datos.map(r=>r.contrato))].sort();
@@ -455,7 +711,7 @@ function poblarFiltros(datos) {
   contratos.forEach(k=> document.getElementById("filtro-contrato").appendChild(new Option(k,k)));
 }
 
-function aplicarFiltros() {
+function aplicarFiltrosTabla() {
   const mes  = document.getElementById("filtro-mes").value;
   const anio = document.getElementById("filtro-anio").value;
   const k    = document.getElementById("filtro-contrato").value;
@@ -464,10 +720,10 @@ function aplicarFiltros() {
     return (!mes||rm===mes) && (!anio||ra===anio) && (!k||r.contrato===k);
   });
   pagina = 1;
-  renderResumen();
+  renderTabla();
 }
 
-function renderResumen() {
+function renderTabla() {
   const total    = datosFiltrados.length;
   const totalPag = Math.ceil(total/POR_PAG)||1;
   const inicio   = (pagina-1)*POR_PAG;
@@ -475,8 +731,8 @@ function renderResumen() {
 
   document.getElementById("pag-info").textContent =
     total ? `Mostrando ${inicio+1}–${Math.min(inicio+POR_PAG,total)} de ${total}` : "";
-  document.getElementById("btn-prev").disabled = pagina <= 1;
-  document.getElementById("btn-next").disabled = pagina >= totalPag;
+  document.getElementById("btn-prev").disabled = pagina<=1;
+  document.getElementById("btn-next").disabled = pagina>=totalPag;
 
   if (!pag.length) {
     document.getElementById("body-resumen").innerHTML =
@@ -494,11 +750,7 @@ function renderResumen() {
   `).join("");
 }
 
-function cambiarPagina(dir) {
-  pagina += dir;
-  renderResumen();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
+function cambiarPagina(dir) { pagina+=dir; renderTabla(); window.scrollTo({top:0,behavior:"smooth"}); }
 
 function renderHistorial(datos) {
   if (!datos.length) {
@@ -578,31 +830,29 @@ function cerrarModal() {
 
 // ── Pendientes ────────────────────────────────────────────────
 function verificarPendientes(resumen) {
-  if (!user || user.rol === "admin") return;
+  if (!user||user.rol==="admin") return;
   const hoy = new Date();
-  const contratosUsuario = user.contratos || [];
+  const contratosUsuario = user.contratos||[];
   if (!contratosUsuario.length) return;
-  const mesActualNum = hoy.getFullYear() * 12 + hoy.getMonth();
-  const periodosEnBD = [...new Set(resumen.map(r => r.periodo))].sort();
-  if (!periodosEnBD.length) { if (hoy.getDate() < 10) return; }
-  const INICIO = 2025 * 12 + 0;
+  const mesActualNum = hoy.getFullYear()*12+hoy.getMonth();
+  const periodosEnBD = [...new Set(resumen.map(r=>r.periodo))].sort();
+  const INICIO = 2025*12+0;
   const primerMesNum = periodosEnBD.length
-    ? Math.max(INICIO, (() => { const [a,m]=periodosEnBD[0].split("-").map(Number); return a*12+(m-1); })())
+    ? Math.max(INICIO, (()=>{ const [a,m]=periodosEnBD[0].split("-").map(Number); return a*12+(m-1); })())
     : mesActualNum;
-  const cargados = new Set(resumen.map(r => r.periodo+"__"+r.contrato));
+  const cargados = new Set(resumen.map(r=>r.periodo+"__"+r.contrato));
   const faltantes = [];
-  for (let m = primerMesNum; m <= mesActualNum; m++) {
-    const anio = Math.floor(m/12);
-    const mes  = (m%12)+1;
-    const periodo = anio+"-"+String(mes).padStart(2,"0");
-    if (m === mesActualNum && hoy.getDate() < 10) continue;
-    const cf = contratosUsuario.filter(k => !cargados.has(periodo+"__"+k));
-    if (cf.length) faltantes.push({periodo, contratos:cf});
+  for (let m=primerMesNum; m<=mesActualNum; m++) {
+    const anio=Math.floor(m/12), mes=(m%12)+1;
+    const periodo=anio+"-"+String(mes).padStart(2,"0");
+    if (m===mesActualNum&&hoy.getDate()<10) continue;
+    const cf=contratosUsuario.filter(k=>!cargados.has(periodo+"__"+k));
+    if (cf.length) faltantes.push({periodo,contratos:cf});
   }
   if (!faltantes.length) return;
-  document.getElementById("pendientes-lista").innerHTML = faltantes.map(f => {
-    const [a,m] = f.periodo.split("-");
-    const esPasado = f.periodo < (new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0"));
+  document.getElementById("pendientes-lista").innerHTML = faltantes.map(f=>{
+    const [a,m]=f.periodo.split("-");
+    const esPasado=f.periodo<(new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0"));
     return `<div style="text-align:left;padding:8px 12px;background:${esPasado?"var(--rojo-light)":"var(--amarillo-light)"};border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
       <div><span style="font-size:13px;font-weight:500">${MESES[parseInt(m)]} ${a}</span>
       <span style="font-size:11px;color:${esPasado?"var(--rojo)":"var(--amarillo)"};margin-left:6px">${esPasado?"vencido":"pendiente"}</span></div>
@@ -617,16 +867,22 @@ function cerrarModalPendientes() {
 }
 
 // Eventos
-document.getElementById("modal-bg").addEventListener("click", e => {
-  if (e.target === document.getElementById("modal-bg")) cerrarModal();
+document.getElementById("modal-bg").addEventListener("click", e=>{
+  if(e.target===document.getElementById("modal-bg")) cerrarModal();
 });
 document.getElementById("modal-buscar").addEventListener("input", renderDetalle);
 document.getElementById("modal-tipo").addEventListener("change", renderDetalle);
-["filtro-mes","filtro-anio","filtro-contrato"].forEach(id =>
-  document.getElementById(id).addEventListener("change", aplicarFiltros)
+["filtro-mes","filtro-anio","filtro-contrato"].forEach(id=>
+  document.getElementById(id).addEventListener("change", aplicarFiltrosTabla)
 );
 
-cargarDatos();
+// Cerrar dropdown al clickear afuera
+document.addEventListener("click", e => {
+  const bar = document.getElementById("filtros-bar-dash");
+  if (bar && !bar.contains(e.target)) cerrarContratosDropdown();
+});
+
+init();
 </script>
 </body>
 </html>
