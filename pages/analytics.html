@@ -7,40 +7,132 @@
   <link rel="stylesheet" href="../css/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
-    .chart-card { background:var(--blanco); border:1px solid var(--gris-borde); border-radius:var(--radio); padding:1.25rem; box-shadow:var(--sombra); margin-bottom:1.25rem; }
-    .chart-title { font-size:14px; font-weight:600; margin-bottom:.25rem; }
-    .chart-sub   { font-size:12px; color:var(--gris-texto); margin-bottom:1rem; }
-    .chart-wrap  { position:relative; height:300px; }
-    .chart-wrap.tall { height:380px; }
-
-    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:1.25rem; }
-    .kpi { background:var(--blanco); border:1px solid var(--gris-borde); border-radius:var(--radio); padding:1.25rem 1.5rem; box-shadow:var(--sombra); border-left:4px solid var(--primario); }
-    .kpi-label { font-size:11px; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
-    .kpi-val   { font-size:28px; font-weight:700; color:var(--primario); }
-    .kpi-badge { display:inline-block; font-size:12px; font-weight:500; padding:3px 9px; border-radius:20px; margin-top:6px; }
-    .kpi-badge.up   { background:#D1FAE5; color:#065F46; }
-    .kpi-badge.down { background:var(--rojo-light); color:var(--rojo); }
-    .kpi-badge.flat { background:var(--gris-bg); color:var(--gris-texto); }
-
-    .control-bar {
-      background:var(--blanco); border:1px solid var(--gris-borde);
-      border-radius:var(--radio); padding:1rem 1.25rem;
-      box-shadow:var(--sombra); margin-bottom:1.25rem;
-      display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;
+    /* Panel de filtros lateral */
+    .analytics-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 1.25rem;
+      align-items: start;
     }
-    .filtro-grupo { display:flex; flex-direction:column; gap:4px; }
-    .filtro-grupo label { font-size:11px; font-weight:500; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.3px; margin:0; }
-    .filtro-sep { font-size:18px; color:var(--gris-texto); padding-bottom:4px; }
+    .filtros-panel {
+      background: var(--blanco);
+      border: 1px solid var(--gris-borde);
+      border-radius: var(--radio);
+      padding: 1.25rem;
+      box-shadow: var(--sombra);
+      position: sticky;
+      top: 1rem;
+    }
+    .filtros-panel h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gris-texto);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: .75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gris-borde);
+    }
+    .filtros-panel h3:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 
-    .toggle-global { display:flex; border:1px solid var(--gris-borde); border-radius:8px; overflow:hidden; margin-left:auto; }
-    .toggle-global button { padding:7px 20px; font-size:13px; font-weight:500; border:none; background:var(--blanco); cursor:pointer; color:var(--gris-texto); transition:all .15s; }
-    .toggle-global button.active { background:var(--primario); color:var(--blanco); }
+    /* Checkboxes */
+    .check-grupo { display: flex; flex-direction: column; gap: 6px; }
+    .check-item  {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; cursor: pointer; padding: 4px 6px;
+      border-radius: 6px; transition: background .1s;
+    }
+    .check-item:hover { background: var(--gris-bg); }
+    .check-item input[type="checkbox"] {
+      width: 15px; height: 15px; cursor: pointer;
+      accent-color: var(--primario);
+    }
+    .check-badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      padding: 1px 6px; border-radius: 10px;
+      background: var(--primario-light); color: var(--primario-dark);
+      margin-left: auto;
+    }
 
-    .modo-badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:var(--primario-light); color:var(--primario-dark); font-weight:500; margin-left:6px; vertical-align:middle; }
+    /* Toggle OPEX/CAPEX */
+    .tipo-toggle {
+      display: flex; border: 1px solid var(--gris-borde);
+      border-radius: 8px; overflow: hidden; width: 100%;
+    }
+    .tipo-btn {
+      flex: 1; padding: 6px 8px; font-size: 12px; font-weight: 500;
+      border: none; background: var(--blanco); cursor: pointer;
+      color: var(--gris-texto); transition: all .15s; text-align: center;
+    }
+    .tipo-btn.active { background: var(--primario); color: var(--blanco); }
 
-    .leyenda-interanual { display:flex; gap:1rem; margin-bottom:.75rem; flex-wrap:wrap; }
-    .leyenda-item { display:flex; align-items:center; gap:6px; font-size:12px; }
-    .leyenda-dot  { width:12px; height:12px; border-radius:50%; }
+    /* Rango de fechas */
+    .fecha-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: .5rem; }
+    .fecha-row label { font-size: 11px; color: var(--gris-texto); margin: 0; }
+    .fecha-inputs { display: flex; gap: 4px; }
+    .fecha-inputs select { font-size: 11px; flex: 1; }
+
+    /* Botón aplicar */
+    .btn-aplicar {
+      width: 100%; margin-top: 1rem; padding: 8px;
+      background: var(--primario); color: var(--blanco);
+      border: none; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .btn-aplicar:hover { background: var(--primario-dark); }
+    .btn-reset {
+      width: 100%; margin-top: 6px; padding: 6px;
+      background: var(--blanco); color: var(--gris-texto);
+      border: 1px solid var(--gris-borde); border-radius: 8px;
+      font-size: 12px; cursor: pointer;
+    }
+
+    /* Contenido de gráficos */
+    .charts-content {}
+    .chart-card {
+      background: var(--blanco); border: 1px solid var(--gris-borde);
+      border-radius: var(--radio); padding: 1.25rem;
+      box-shadow: var(--sombra); margin-bottom: 1.25rem;
+    }
+    .chart-title { font-size: 14px; font-weight: 600; margin-bottom: .25rem; }
+    .chart-sub   { font-size: 12px; color: var(--gris-texto); margin-bottom: 1rem; }
+    .chart-wrap  { position: relative; height: 300px; }
+    .chart-wrap.tall { height: 380px; }
+
+    /* KPIs */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+      gap: 12px; margin-bottom: 1.25rem;
+    }
+    .kpi {
+      background: var(--blanco); border: 1px solid var(--gris-borde);
+      border-radius: var(--radio); padding: 1rem 1.25rem;
+      box-shadow: var(--sombra); border-left: 4px solid var(--primario);
+    }
+    .kpi.sec  { border-left-color: var(--secundario); }
+    .kpi.prov { border-left-color: #059669; }
+    .kpi-label { font-size: 11px; color: var(--gris-texto); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .kpi-val   { font-size: 24px; font-weight: 700; color: var(--primario); }
+    .kpi.sec .kpi-val  { color: var(--secundario); }
+    .kpi.prov .kpi-val { color: #059669; }
+
+    /* Leyenda interanual */
+    .leyenda { display: flex; gap: 1rem; margin-bottom: .75rem; flex-wrap: wrap; }
+    .leyenda-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+    .leyenda-dot  { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* Modo badge */
+    .modo-badge {
+      display: inline-block; font-size: 11px; padding: 2px 8px;
+      border-radius: 20px; background: var(--primario-light);
+      color: var(--primario-dark); font-weight: 500; margin-left: 6px; vertical-align: middle;
+    }
+
+    @media (max-width: 900px) {
+      .analytics-layout { grid-template-columns: 1fr; }
+      .filtros-panel { position: static; }
+    }
   </style>
 </head>
 <body>
@@ -58,123 +150,145 @@
       </div>
     </div>
 
-    <!-- Barra de control -->
-    <div class="control-bar">
-      <div class="filtro-grupo">
-        <label>Contrato</label>
-        <select id="filtro-contrato" style="width:auto">
-          <option value="">Todos</option>
-        </select>
-      </div>
-      <div class="filtro-grupo">
-        <label>Desde</label>
-        <div style="display:flex;gap:6px">
-          <select id="desde-mes" style="width:auto"></select>
-          <select id="desde-anio" style="width:auto"></select>
+    <div class="analytics-layout">
+
+      <!-- Panel de filtros lateral -->
+      <aside class="filtros-panel">
+
+        <h3>Período</h3>
+        <div class="fecha-row">
+          <label>Desde</label>
+          <div class="fecha-inputs">
+            <select id="desde-mes"></select>
+            <select id="desde-anio"></select>
+          </div>
         </div>
-      </div>
-      <div class="filtro-sep">→</div>
-      <div class="filtro-grupo">
-        <label>Hasta</label>
-        <div style="display:flex;gap:6px">
-          <select id="hasta-mes" style="width:auto"></select>
-          <select id="hasta-anio" style="width:auto"></select>
+        <div class="fecha-row">
+          <label>Hasta</label>
+          <div class="fecha-inputs">
+            <select id="hasta-mes"></select>
+            <select id="hasta-anio"></select>
+          </div>
         </div>
-      </div>
-      <button class="btn btn-primary" onclick="aplicar()">Aplicar</button>
-      <button class="btn" onclick="resetFiltros()">Restablecer</button>
-      <div class="toggle-global">
-        <button id="btn-facturacion" class="active" onclick="setModo('facturacion')">$ Facturación</button>
-        <button id="btn-pgn" onclick="setModo('pgn')">PGN</button>
-      </div>
-    </div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid" id="kpis">
-      <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
-    </div>
-
-    <!-- Línea -->
-    <div class="chart-card">
-      <div class="chart-title" id="linea-title">Evolución mensual del total certificado</div>
-      <div class="chart-sub" id="linea-sub">Total facturado mes a mes</div>
-      <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
-    </div>
-
-    <!-- Barras -->
-    <div class="chart-card">
-      <div class="chart-title" id="barras-title">Certificado por contrato y período</div>
-      <div class="chart-sub">Comparación entre contratos K</div>
-      <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
-    </div>
-
-    <!-- Interanual -->
-    <div class="chart-card">
-      <div class="chart-title">Análisis interanual</div>
-      <div class="chart-sub" id="interanual-sub">Comparación mes a mes: año actual vs año anterior</div>
-      <div class="leyenda-interanual" id="interanual-leyenda"></div>
-      <div class="chart-wrap tall"><canvas id="chart-interanual"></canvas></div>
-    </div>
-
-    <!-- Top ítems -->
-    <div class="chart-card">
-      <div class="chart-title" id="items-title">Top 10 ítems por monto certificado</div>
-      <div class="chart-sub">Ítems con mayor valor en el período seleccionado</div>
-      <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
-    </div>
-
-    <!-- Estado de cargas -->
-    <div class="chart-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-        <div>
-          <div class="chart-title">Estado de cargas por contrato</div>
-          <div class="chart-sub">Seguimiento de certificaciones desde enero 2025</div>
+        <h3>Tipo</h3>
+        <div class="tipo-toggle">
+          <button class="tipo-btn active" id="tipo-ambos"  onclick="setTipo('')">Ambos</button>
+          <button class="tipo-btn"        id="tipo-opex"   onclick="setTipo('OPEX')">OPEX</button>
+          <button class="tipo-btn"        id="tipo-capex"  onclick="setTipo('CAPEX')">CAPEX</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select id="filtro-estado-k" style="width:auto" onchange="filtrarEstado()">
-            <option value="">Todos los contratos</option>
-          </select>
-          <select id="filtro-estado-anio" style="width:auto" onchange="filtrarEstado()">
-            <option value="">Todos los años</option>
-          </select>
-          <select id="filtro-estado-mes" style="width:auto" onchange="filtrarEstado()">
-            <option value="">Todos los meses</option>
-          </select>
-          <select id="filtro-estado-tipo" style="width:auto" onchange="filtrarEstado()">
-            <option value="">Todos</option>
-            <option value="pendiente">Solo pendientes</option>
-            <option value="cargado">Solo cargados</option>
-          </select>
+
+        <h3>Contratos</h3>
+        <div class="check-grupo" id="check-contratos">
+          <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
         </div>
-      </div>
-
-      <div id="estado-resumen" style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap"></div>
-
-      <div class="tabla-wrap">
-        <table style="font-size:13px">
-          <thead>
-            <tr>
-              <th>Período</th><th>Contrato</th>
-              <th style="text-align:center">Estado</th>
-              <th>Cargado por</th><th>Fecha carga</th>
-              <th style="text-align:right">Líneas</th>
-            </tr>
-          </thead>
-          <tbody id="body-estado">
-            <tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
-        <span id="estado-pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-sm" id="estado-btn-prev" onclick="cambiarPaginaEstado(-1)">← Anterior</button>
-          <button class="btn btn-sm" id="estado-btn-next" onclick="cambiarPaginaEstado(1)">Siguiente →</button>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllContratos(true)">Todos</button>
+          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllContratos(false)">Ninguno</button>
         </div>
+
+        <h3>Provincias</h3>
+        <div class="check-grupo" id="check-provincias">
+          <div style="font-size:12px;color:var(--gris-texto)">Cargando...</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllProvincias(true)">Todas</button>
+          <button class="btn btn-sm" style="flex:1;font-size:11px" onclick="selAllProvincias(false)">Ninguna</button>
+        </div>
+
+        <h3>Vista</h3>
+        <div class="tipo-toggle">
+          <button class="tipo-btn active" id="modo-fact" onclick="setModo('facturacion')">$ Facturación</button>
+          <button class="tipo-btn"        id="modo-pgn"  onclick="setModo('pgn')">PGN</button>
+        </div>
+
+        <button class="btn-aplicar" onclick="aplicar()">Aplicar filtros</button>
+        <button class="btn-reset"   onclick="resetFiltros()">Restablecer</button>
+
+      </aside>
+
+      <!-- Contenido principal -->
+      <div class="charts-content">
+
+        <!-- KPIs -->
+        <div class="kpi-grid" id="kpis">
+          <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
+        </div>
+
+        <!-- Evolución mensual -->
+        <div class="chart-card">
+          <div class="chart-title" id="linea-title">Evolución mensual del total certificado</div>
+          <div class="chart-sub">Total mes a mes en el período seleccionado</div>
+          <div class="chart-wrap tall"><canvas id="chart-linea"></canvas></div>
+        </div>
+
+        <!-- Por contrato y período -->
+        <div class="chart-card">
+          <div class="chart-title" id="barras-title">Certificado por contrato y período</div>
+          <div class="chart-sub">Comparación entre contratos K</div>
+          <div class="chart-wrap tall"><canvas id="chart-barras"></canvas></div>
+        </div>
+
+        <!-- Por provincia -->
+        <div class="chart-card">
+          <div class="chart-title" id="prov-title">Certificado por provincia</div>
+          <div class="chart-sub">Distribución geográfica en el período seleccionado</div>
+          <div class="chart-wrap"><canvas id="chart-provincia"></canvas></div>
+        </div>
+
+        <!-- Interanual -->
+        <div class="chart-card">
+          <div class="chart-title">Análisis interanual</div>
+          <div class="chart-sub" id="interanual-sub">Comparación año actual vs anterior</div>
+          <div class="leyenda" id="interanual-leyenda"></div>
+          <div class="chart-wrap tall"><canvas id="chart-interanual"></canvas></div>
+        </div>
+
+        <!-- Top ítems -->
+        <div class="chart-card">
+          <div class="chart-title" id="items-title">Top 10 ítems por monto certificado</div>
+          <div class="chart-sub">Ítems con mayor valor en el período seleccionado</div>
+          <div class="chart-wrap" style="height:320px"><canvas id="chart-items"></canvas></div>
+        </div>
+
+        <!-- Estado de cargas -->
+        <div class="chart-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="chart-title">Estado de cargas por contrato</div>
+              <div class="chart-sub">Seguimiento desde enero 2025</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="filtro-estado-k"    style="width:auto" onchange="filtrarEstado()"><option value="">Todos los contratos</option></select>
+              <select id="filtro-estado-anio" style="width:auto" onchange="filtrarEstado()"><option value="">Todos los años</option></select>
+              <select id="filtro-estado-mes"  style="width:auto" onchange="filtrarEstado()"><option value="">Todos los meses</option></select>
+              <select id="filtro-estado-tipo" style="width:auto" onchange="filtrarEstado()">
+                <option value="">Todos</option>
+                <option value="pendiente">Solo pendientes</option>
+                <option value="cargado">Solo cargados</option>
+              </select>
+            </div>
+          </div>
+          <div id="estado-resumen" style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap"></div>
+          <div class="tabla-wrap">
+            <table style="font-size:13px">
+              <thead>
+                <tr><th>Período</th><th>Contrato</th><th style="text-align:center">Estado</th><th>Cargado por</th><th>Fecha</th><th style="text-align:right">Líneas</th></tr>
+              </thead>
+              <tbody id="body-estado"><tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
+            <span id="estado-pag-info" style="font-size:12px;color:var(--gris-texto)"></span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm" id="estado-btn-prev" onclick="cambiarPaginaEstado(-1)">← Anterior</button>
+              <button class="btn btn-sm" id="estado-btn-next" onclick="cambiarPaginaEstado(1)">Siguiente →</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-
   </main>
 </div>
 
@@ -184,40 +298,115 @@
 Auth.requireLogin();
 renderSidebar("analytics");
 
-const MESES_CORTO = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const MESES_FULL  = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const MESES_CORTO = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const COLORES     = ["#DCA028","#4A4A4A","#E8831A","#787878","#F0C060","#2563EB","#059669","#DC2626","#7C3AED","#0891B2"];
 
-let charts           = {};
-let modo             = "facturacion";
-let datosLinea       = [];
-let datosBarras      = [];
-let datosItems       = [];
-let datosInteranual  = null;
-let estadoData       = [];
-let estadoPagina     = 1;
+let charts        = {};
+let modo          = "facturacion";
+let tipoFiltro    = "";
+let contratosDisp = [];
+let provinciasDisp= [];
+let estadoData    = [];
+let estadoPagina  = 1;
 const ESTADO_POR_PAG = 15;
 
 // ── Init ──────────────────────────────────────────────────────
 async function init() {
-  try {
-    const contratos = await get("/analytics/contratos");
-    const sel = document.getElementById("filtro-contrato");
-    contratos.forEach(k => sel.appendChild(new Option(k, k)));
-  } catch(e) {}
   poblarFiltrosFecha();
-  const { desde, hasta } = getRango();
-  await Promise.all([
-    cargarDatos(desde, hasta, ""),
-    cargarEstado(),
-  ]);
+
+  try {
+    const [conts, provs] = await Promise.all([
+      get("/analytics/contratos"),
+      get("/analytics/provincias"),
+    ]);
+    contratosDisp  = conts;
+    provinciasDisp = provs;
+    renderCheckboxesContratos(conts, conts); // todos seleccionados
+    renderCheckboxesProvincias(provs, provs);
+  } catch(e) { console.error(e); }
+
+  aplicar();
+  cargarEstado();
 }
 
-// ── Filtros gráficos ──────────────────────────────────────────
+// ── Checkboxes contratos ──────────────────────────────────────
+function renderCheckboxesContratos(todos, seleccionados) {
+  document.getElementById("check-contratos").innerHTML = todos.map(k => `
+    <label class="check-item">
+      <input type="checkbox" value="${k}" ${seleccionados.includes(k)?"checked":""}
+             onchange="actualizarBadgeContrato()">
+      ${k}
+    </label>
+  `).join("");
+  actualizarBadgeContrato();
+}
+
+function actualizarBadgeContrato() {
+  const sel = getContratosSeleccionados();
+  // Sin badge — solo el título
+}
+
+function getContratosSeleccionados() {
+  return [...document.querySelectorAll("#check-contratos input:checked")].map(i => i.value);
+}
+
+function selAllContratos(activo) {
+  document.querySelectorAll("#check-contratos input").forEach(i => i.checked = activo);
+}
+
+// ── Checkboxes provincias ─────────────────────────────────────
+function renderCheckboxesProvincias(todas, seleccionadas) {
+  document.getElementById("check-provincias").innerHTML = todas.map(p => `
+    <label class="check-item">
+      <input type="checkbox" value="${p}" ${seleccionadas.includes(p)?"checked":""}> ${p}
+    </label>
+  `).join("");
+}
+
+function getProvinciasSeleccionadas() {
+  return [...document.querySelectorAll("#check-provincias input:checked")].map(i => i.value);
+}
+
+function selAllProvincias(activo) {
+  document.querySelectorAll("#check-provincias input").forEach(i => i.checked = activo);
+}
+
+// ── Tipo OPEX/CAPEX ───────────────────────────────────────────
+function setTipo(t) {
+  tipoFiltro = t;
+  document.getElementById("tipo-ambos").classList.toggle("active", t==="");
+  document.getElementById("tipo-opex").classList.toggle("active",  t==="OPEX");
+  document.getElementById("tipo-capex").classList.toggle("active", t==="CAPEX");
+}
+
+// ── Modo PGN/Facturación ──────────────────────────────────────
+function setModo(m) {
+  modo = m;
+  const esPGN = m === "pgn";
+  document.getElementById("modo-fact").classList.toggle("active", !esPGN);
+  document.getElementById("modo-pgn").classList.toggle("active",   esPGN);
+  document.getElementById("modo-badge").textContent = esPGN ? "PGN" : "$ Facturación";
+  document.getElementById("linea-title").textContent  = esPGN ? "Evolución mensual en PGN" : "Evolución mensual del total certificado";
+  document.getElementById("barras-title").textContent = esPGN ? "PGN por contrato y período" : "Certificado por contrato y período";
+  document.getElementById("prov-title").textContent   = esPGN ? "PGN por provincia" : "Certificado por provincia";
+  document.getElementById("items-title").textContent  = esPGN ? "Top 10 ítems por PGN" : "Top 10 ítems por monto certificado";
+  // Rerenderizar sin llamar al backend
+  destruirCharts();
+  if (charts._linea)      renderLineaChart(charts._linea);
+  if (charts._barras)     renderBarrasChart(charts._barras);
+  if (charts._provincia)  renderProvinciaChart(charts._provincia);
+  if (charts._interanual) renderInteranualChart(charts._interanual);
+  if (charts._items)      renderItemsChart(charts._items);
+  renderKPIs(charts._provincia);
+}
+
+// ── Fechas ────────────────────────────────────────────────────
 function poblarFiltrosFecha() {
   const hoy   = new Date();
   const anioH = hoy.getFullYear();
   const mesH  = hoy.getMonth() + 1;
+
   ["desde-mes","hasta-mes"].forEach(id => {
     const sel = document.getElementById(id);
     for (let m = 1; m <= 12; m++)
@@ -247,127 +436,149 @@ function resetFiltros() {
   document.getElementById("desde-anio").value = hoy.getFullYear();
   document.getElementById("hasta-mes").value  = String(hoy.getMonth()+1).padStart(2,"0");
   document.getElementById("hasta-anio").value = hoy.getFullYear();
-  document.getElementById("filtro-contrato").value = "";
+  setTipo("");
+  selAllContratos(true);
+  selAllProvincias(true);
   aplicar();
 }
 
+// ── Construir query string ────────────────────────────────────
+function buildQS() {
+  const { desde, hasta } = getRango();
+  const conts = getContratosSeleccionados();
+  const provs = getProvinciasSeleccionadas();
+  const params = new URLSearchParams();
+  if (desde)     params.append("desde", desde);
+  if (hasta)     params.append("hasta", hasta);
+  if (tipoFiltro)params.append("tipo",  tipoFiltro);
+  conts.forEach(k => params.append("contratos", k));
+  provs.forEach(p => params.append("provincias", p));
+  return params.toString() ? "?" + params.toString() : "";
+}
+
+function buildQSInteranual() {
+  const conts = getContratosSeleccionados();
+  const provs = getProvinciasSeleccionadas();
+  const params = new URLSearchParams();
+  if (tipoFiltro)params.append("tipo",  tipoFiltro);
+  conts.forEach(k => params.append("contratos", k));
+  provs.forEach(p => params.append("provincias", p));
+  return params.toString() ? "?" + params.toString() : "";
+}
+
+// ── Aplicar todos los filtros ─────────────────────────────────
 async function aplicar() {
   const { desde, hasta } = getRango();
   if (desde > hasta) { alert("El rango 'desde' no puede ser mayor que 'hasta'"); return; }
-  destruirCharts();
-  await cargarDatos(desde, hasta, document.getElementById("filtro-contrato").value);
-}
 
-function destruirCharts() {
-  Object.values(charts).forEach(c => c.destroy());
-  charts = {};
-}
+  const qs    = buildQS();
+  const qsInt = buildQSInteranual();
 
-// ── Toggle modo global ────────────────────────────────────────
-function setModo(nuevoModo) {
-  modo = nuevoModo;
-  const esPGN = modo === "pgn";
-  document.getElementById("btn-facturacion").classList.toggle("active", !esPGN);
-  document.getElementById("btn-pgn").classList.toggle("active", esPGN);
-  document.getElementById("modo-badge").textContent = esPGN ? "PGN" : "$ Facturación";
-  document.getElementById("linea-title").textContent  = esPGN ? "Evolución mensual en PGN" : "Evolución mensual del total certificado";
-  document.getElementById("linea-sub").textContent    = esPGN ? "Puntos Gasnor certificados mes a mes" : "Total facturado mes a mes";
-  document.getElementById("barras-title").textContent = esPGN ? "PGN por contrato y período" : "Certificado por contrato y período";
-  document.getElementById("items-title").textContent  = esPGN ? "Top 10 ítems por PGN" : "Top 10 ítems por monto certificado";
-  destruirCharts();
-  renderLineaChart(datosLinea);
-  renderBarrasChart(datosBarras);
-  renderInteranualChart(datosInteranual);
-  renderItemsChart(datosItems);
-}
-
-// ── Carga de datos gráficos ───────────────────────────────────
-async function cargarDatos(desde, hasta, contrato) {
-  const q = new URLSearchParams();
-  if (desde)    q.set("desde", desde);
-  if (hasta)    q.set("hasta", hasta);
-  if (contrato) q.set("contrato", contrato);
-  const qs  = q.toString() ? "?" + q.toString() : "";
-  const qInt= contrato ? "?contrato=" + contrato : "";
   try {
-    const [linea, barras, topItems, iData] = await Promise.all([
+    const [linea, barras, provincia, interanual, topItems] = await Promise.all([
       get(`/analytics/evolucion-mensual${qs}`),
       get(`/analytics/por-contrato-mes${qs}`),
+      get(`/analytics/por-provincia${qs}`),
+      get(`/analytics/interanual${qsInt}`),
       get(`/analytics/top-items${qs}&limite=10`),
-      get(`/analytics/interanual${qInt}`),
     ]);
-    datosLinea     = linea;
-    datosBarras    = barras;
-    datosItems     = topItems;
-    datosInteranual= iData;
-    renderKPIs(linea);
+
+    // Guardar datos para rerenderizar al cambiar modo
+    charts._linea      = linea;
+    charts._barras     = barras;
+    charts._provincia  = provincia;
+    charts._interanual = interanual;
+    charts._items      = topItems;
+
+    destruirCharts();
+    renderKPIs(provincia);
     renderLineaChart(linea);
     renderBarrasChart(barras);
-    renderInteranualChart(iData);
+    renderProvinciaChart(provincia);
+    renderInteranualChart(interanual);
     renderItemsChart(topItems);
+
   } catch(err) { console.error(err); }
 }
 
-// ── KPIs ──────────────────────────────────────────────────────
-function renderKPIs(linea) {
-  const total    = linea.reduce((s,d) => s + Number(d.monto_total||0), 0);
-  const totalPGN = linea.reduce((s,d) => s + Number(d.pgn_total||0), 0);
-  const porMes   = {};
-  linea.forEach(d => porMes[d.periodo] = Number(d.monto_total||0));
-  const periodos = Object.keys(porMes).sort();
-  let variacion  = 0;
-  if (periodos.length >= 2) {
-    const ult  = porMes[periodos[periodos.length-1]];
-    const prev = porMes[periodos[periodos.length-2]];
-    if (prev > 0) variacion = ((ult-prev)/prev*100).toFixed(1);
-  }
-  const varClass = variacion > 0 ? "up" : variacion < 0 ? "down" : "flat";
-  const varIcon  = variacion > 0 ? "▲" : variacion < 0 ? "▼" : "—";
-  document.getElementById("kpis").innerHTML = `
-    <div class="kpi">
-      <div class="kpi-label">Total facturado en el período</div>
-      <div class="kpi-val">${formatMonto(total)}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Total PGN en el período</div>
-      <div class="kpi-val" style="font-size:22px">${Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})} PGN</div>
-    </div>
-    <div class="kpi" style="border-left-color:var(--secundario)">
-      <div class="kpi-label">Variación último mes</div>
-      <div class="kpi-val" style="color:var(--secundario);font-size:22px">${Math.abs(variacion)}%</div>
-      <span class="kpi-badge ${varClass}">${varIcon} vs mes anterior</span>
-    </div>
-  `;
+function destruirCharts() {
+  ["linea","barras","provincia","interanual","items"].forEach(k => {
+    if (charts[k]) { charts[k].destroy(); delete charts[k]; }
+  });
 }
 
 // ── Helpers ───────────────────────────────────────────────────
 const esPGN = () => modo === "pgn";
-function getValor(d, campoMonto, campoPGN) { return esPGN() ? Number(d[campoPGN]||0) : Number(d[campoMonto]||0); }
-function fmtY(v) { return esPGN() ? (v>=1e6?(v/1e6).toFixed(1)+"M":( v/1e3).toFixed(0)+"K")+" PGN" : "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K"); }
-function fmtTooltip(v) { return esPGN() ? " "+Number(v).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : " "+formatMonto(v); }
+function getVal(d, m, p) { return esPGN() ? Number(d[p]||0) : Number(d[m]||0); }
+function fmtY(v) {
+  return esPGN()
+    ? (v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K")+" PGN"
+    : "$"+(v>=1e6?(v/1e6).toFixed(1)+"M":(v/1e3).toFixed(0)+"K");
+}
+function fmtTip(v) {
+  return esPGN()
+    ? " "+Number(v).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN"
+    : " "+formatMonto(v);
+}
 
-// ── Línea ─────────────────────────────────────────────────────
+// ── KPIs ──────────────────────────────────────────────────────
+function renderKPIs(provincia) {
+  const totalMonto = (charts._linea||[]).reduce((s,d)=>s+Number(d.monto_total||0),0);
+  const totalPGN   = (charts._linea||[]).reduce((s,d)=>s+Number(d.pgn_total||0),0);
+  const provTop    = provincia && provincia.length > 0 ? provincia[0] : null;
+
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi">
+      <div class="kpi-label">Total ${esPGN()?"PGN":"facturado"} en el período</div>
+      <div class="kpi-val">${esPGN() ? Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : formatMonto(totalMonto)}</div>
+    </div>
+    <div class="kpi sec">
+      <div class="kpi-label">Variación último mes</div>
+      <div class="kpi-val" style="font-size:20px">${_varUltimoMes()}</div>
+    </div>
+    ${provTop ? `
+    <div class="kpi prov">
+      <div class="kpi-label">Provincia líder</div>
+      <div class="kpi-val" style="font-size:18px">${provTop.provincia}</div>
+      <div style="font-size:11px;color:var(--gris-texto)">${esPGN() ? Number(provTop.pgn_total||0).toLocaleString("es-AR",{maximumFractionDigits:1})+" PGN" : formatMonto(provTop.monto_total)}</div>
+    </div>` : ""}
+  `;
+}
+
+function _varUltimoMes() {
+  const datos = charts._linea || [];
+  if (datos.length < 2) return "—";
+  const campo = esPGN() ? "pgn_total" : "monto_total";
+  const ult  = Number(datos[datos.length-1][campo]||0);
+  const prev = Number(datos[datos.length-2][campo]||0);
+  if (!prev) return "—";
+  const v = ((ult-prev)/prev*100).toFixed(1);
+  const cls = v > 0 ? "color:#059669" : v < 0 ? "color:var(--rojo)" : "";
+  return `<span style="${cls}">${v > 0 ? "▲" : v < 0 ? "▼" : ""}${Math.abs(v)}%</span>`;
+}
+
+// ── Gráfico de línea ──────────────────────────────────────────
 function renderLineaChart(datos) {
   const ctx  = document.getElementById("chart-linea").getContext("2d");
-  const lbls = datos.map(d => { const[a,m]=d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
-  const vals = datos.map(d => getValor(d,"monto_total","pgn_total"));
+  const lbls = datos.map(d=>{ const[a,m]=d.periodo.split("-"); return MESES_CORTO[parseInt(m)]+" "+a; });
+  const vals = datos.map(d=>getVal(d,"monto_total","pgn_total"));
   charts.linea = new Chart(ctx, {
     type:"line",
     data:{labels:lbls,datasets:[{
       label:esPGN()?"PGN":"Facturación", data:vals,
       borderColor:"#DCA028",backgroundColor:"rgba(220,160,40,.08)",
-      borderWidth:2.5,pointRadius:5,pointBackgroundColor:"#DCA028",
+      borderWidth:2.5,pointRadius:4,pointBackgroundColor:"#DCA028",
       pointBorderColor:"#fff",pointBorderWidth:2,tension:.35,fill:true,
     }]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtTooltip(c.raw)}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtTip(c.raw)}}},
       scales:{y:{beginAtZero:true,ticks:{callback:fmtY,font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
               x:{ticks:{font:{size:11},maxRotation:45},grid:{display:false}}}
     }
   });
 }
 
-// ── Barras ────────────────────────────────────────────────────
+// ── Barras por contrato ───────────────────────────────────────
 function renderBarrasChart(datos) {
   const ctx       = document.getElementById("chart-barras").getContext("2d");
   const periodos  = [...new Set(datos.map(d=>d.periodo))].sort();
@@ -375,55 +586,81 @@ function renderBarrasChart(datos) {
   const labels    = periodos.map(p=>{ const[a,m]=p.split("-"); return MESES_CORTO[parseInt(m)]+" "+a.slice(2); });
   const datasets  = contratos.map((k,i)=>({
     label:k,
-    data:periodos.map(p=>{ const r=datos.find(d=>d.periodo===p&&d.contrato===k); return r?getValor(r,"monto_total","pgn_total"):0; }),
-    backgroundColor:COLORES[i%COLORES.length]+"CC", borderColor:COLORES[i%COLORES.length],
-    borderWidth:1, borderRadius:4,
+    data:periodos.map(p=>{ const r=datos.find(d=>d.periodo===p&&d.contrato===k); return r?getVal(r,"monto_total","pgn_total"):0; }),
+    backgroundColor:COLORES[i%COLORES.length]+"CC",
+    borderColor:COLORES[i%COLORES.length],
+    borderWidth:1,borderRadius:4,
   }));
-  charts.barras = new Chart(ctx, {
+  charts.barras = new Chart(ctx,{
     type:"bar",data:{labels,datasets},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:"top",labels:{font:{size:11},boxWidth:12}},
-        tooltip:{callbacks:{label:c=>" "+c.dataset.label+": "+fmtTooltip(c.raw).trim()}}},
+        tooltip:{callbacks:{label:c=>" "+c.dataset.label+":"+fmtTip(c.raw).trim()}}},
       scales:{y:{beginAtZero:true,ticks:{callback:fmtY,font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
               x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}}}
     }
   });
 }
 
+// ── Por provincia ─────────────────────────────────────────────
+function renderProvinciaChart(datos) {
+  const ctx = document.getElementById("chart-provincia").getContext("2d");
+  const sorted = [...datos].sort((a,b)=>getVal(b,"monto_total","pgn_total")-getVal(a,"monto_total","pgn_total"));
+  charts.provincia = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:sorted.map(d=>d.provincia),
+      datasets:[{
+        label:esPGN()?"PGN":"Facturación",
+        data:sorted.map(d=>getVal(d,"monto_total","pgn_total")),
+        backgroundColor:sorted.map((_,i)=>COLORES[i%COLORES.length]+"CC"),
+        borderColor:sorted.map((_,i)=>COLORES[i%COLORES.length]),
+        borderWidth:1,borderRadius:4,
+      }]
+    },
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtTip(c.raw)}}},
+      scales:{x:{beginAtZero:true,ticks:{callback:fmtY,font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
+              y:{ticks:{font:{size:12}},grid:{display:false}}}
+    }
+  });
+}
+
 // ── Interanual ────────────────────────────────────────────────
 function renderInteranualChart(data) {
-  if (!data || !data.meses || !data.meses.length) return;
-  const meses   = data.meses;
-  const anioAct = data.anio_actual;
-  const anioAnt = data.anio_anterior;
-  const labels  = meses.map(d => MESES_CORTO[d.mes]);
-  const valAct  = meses.map(d => esPGN() ? d.pgn_actual   : d.monto_actual);
-  const valAnt  = meses.map(d => esPGN() ? d.pgn_anterior : d.monto_anterior);
-  const varData = meses.map(d => esPGN() ? d.var_pgn      : d.var_monto);
+  if (!data||!data.meses||!data.meses.length) return;
+  const meses  = data.meses;
+  const anioA  = data.anio_actual;
+  const anioAn = data.anio_anterior;
+  const labels = meses.map(d=>MESES_CORTO[d.mes]);
+  const valA   = meses.map(d=>esPGN()?d.pgn_actual  :d.monto_actual);
+  const valAn  = meses.map(d=>esPGN()?d.pgn_anterior:d.monto_anterior);
+  const varD   = meses.map(d=>esPGN()?d.var_pgn     :d.var_monto);
 
   document.getElementById("interanual-sub").textContent =
-    `${anioAct} vs ${anioAnt} — en ${esPGN()?"Puntos Gasnor (PGN)":"Facturación ($)"}`;
+    `${anioA} vs ${anioAn||"año anterior"} — ${esPGN()?"PGN":"Facturación ($)"}`;
   document.getElementById("interanual-leyenda").innerHTML = `
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#DCA028"></div>${anioAct}</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#787878;opacity:.6"></div>${anioAnt||"Año anterior"}</div>
-    <div class="leyenda-item"><div class="leyenda-dot" style="background:#059669"></div>Variación % (eje der.)</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#DCA028"></div>${anioA}</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#787878;opacity:.5"></div>${anioAn||"Ant."}</div>
+    <div class="leyenda-item"><div class="leyenda-dot" style="background:#059669"></div>Variación %</div>
   `;
 
   const ctx = document.getElementById("chart-interanual").getContext("2d");
-  charts.interanual = new Chart(ctx, {
+  charts.interanual = new Chart(ctx,{
     data:{labels,datasets:[
-      {type:"bar",label:String(anioAct),data:valAct,backgroundColor:"#DCA028CC",borderColor:"#DCA028",borderWidth:1,borderRadius:4,yAxisID:"y"},
-      {type:"bar",label:String(anioAnt||"Anterior"),data:valAnt,backgroundColor:"#78787866",borderColor:"#787878",borderWidth:1,borderRadius:4,yAxisID:"y"},
-      {type:"line",label:"Variación %",data:varData,borderColor:"#059669",backgroundColor:"transparent",borderWidth:2.5,
-        pointRadius:5,pointBackgroundColor:varData.map(v=>v===null?"#999":v>=0?"#059669":"#DC2626"),
+      {type:"bar",label:String(anioA),data:valA,backgroundColor:"#DCA028CC",borderColor:"#DCA028",borderWidth:1,borderRadius:4,yAxisID:"y"},
+      {type:"bar",label:String(anioAn||"Anterior"),data:valAn,backgroundColor:"#78787866",borderColor:"#787878",borderWidth:1,borderRadius:4,yAxisID:"y"},
+      {type:"line",label:"Var. %",data:varD,borderColor:"#059669",backgroundColor:"transparent",
+        borderWidth:2.5,pointRadius:5,
+        pointBackgroundColor:varD.map(v=>v===null?"#999":v>=0?"#059669":"#DC2626"),
         pointBorderColor:"#fff",pointBorderWidth:2,tension:.3,yAxisID:"y2"}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:"top",labels:{font:{size:11},boxWidth:12}},
-        tooltip:{callbacks:{label:c=>c.dataset.label==="Variación %"?` Variación: ${c.raw!==null?c.raw+"%":"Sin dato"}`:` ${c.dataset.label}: ${fmtTooltip(c.raw).trim()}`}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label==="Var. %"?` Var: ${c.raw!==null?c.raw+"%":"—"}`:` ${c.dataset.label}:${fmtTip(c.raw).trim()}`}}},
       scales:{
-        y:{beginAtZero:true,ticks:{callback:fmtY,font:{size:11}},grid:{color:"rgba(0,0,0,.05)"},title:{display:true,text:esPGN()?"PGN":"$",font:{size:11}}},
-        y2:{position:"right",ticks:{callback:v=>v+"%",font:{size:11}},grid:{display:false},title:{display:true,text:"Variación %",font:{size:11}}},
+        y:{beginAtZero:true,ticks:{callback:fmtY,font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
+        y2:{position:"right",ticks:{callback:v=>v+"%",font:{size:11}},grid:{display:false}},
         x:{ticks:{font:{size:11}},grid:{display:false}}
       }
     }
@@ -432,16 +669,18 @@ function renderInteranualChart(data) {
 
 // ── Top ítems ─────────────────────────────────────────────────
 function renderItemsChart(datos) {
-  const ctx    = document.getElementById("chart-items").getContext("2d");
-  const sorted = [...datos].map(d=>({d,v:getValor(d,"monto_total","pgn_total")})).sort((a,b)=>b.v-a.v);
-  charts.items = new Chart(ctx, {
+  const sorted = [...datos].sort((a,b)=>getVal(b,"monto_total","pgn_total")-getVal(a,"monto_total","pgn_total"));
+  const ctx = document.getElementById("chart-items").getContext("2d");
+  charts.items = new Chart(ctx,{
     type:"bar",
-    data:{labels:sorted.map(x=>x.d.item_codigo+" ("+x.d.contrato+")"),
-      datasets:[{label:esPGN()?"PGN":"Total certificado",data:sorted.map(x=>x.v),
-        backgroundColor:"#DCA028CC",borderColor:"#DCA028",borderWidth:1,borderRadius:4}]},
+    data:{
+      labels:sorted.map(d=>d.item_codigo+" ("+d.contrato+")"),
+      datasets:[{label:esPGN()?"PGN":"Total",data:sorted.map(d=>getVal(d,"monto_total","pgn_total")),
+        backgroundColor:"#DCA028CC",borderColor:"#DCA028",borderWidth:1,borderRadius:4}]
+    },
     options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>fmtTooltip(c.raw),afterLabel:c=>" "+(sorted[c.dataIndex].d.tarea||"")}}},
+        tooltip:{callbacks:{label:c=>fmtTip(c.raw),afterLabel:c=>" "+(sorted[c.dataIndex].tarea||"")}}},
       scales:{x:{beginAtZero:true,ticks:{callback:fmtY,font:{size:11}},grid:{color:"rgba(0,0,0,.05)"}},
               y:{ticks:{font:{size:11}},grid:{display:false}}}
     }
@@ -452,33 +691,23 @@ function renderItemsChart(datos) {
 async function cargarEstado() {
   try {
     estadoData = await get("/analytics/estado-cargas");
-
-    // Poblar filtro contratos
-    const contratos = [...new Set(estadoData.map(r => r.contrato))].sort();
+    const conts = [...new Set(estadoData.map(r=>r.contrato))].sort();
+    const anios = [...new Set(estadoData.map(r=>r.periodo.split("-")[0]))].sort().reverse();
+    const meses = [...new Set(estadoData.map(r=>r.periodo.split("-")[1]))].sort();
     const selK = document.getElementById("filtro-estado-k");
+    const selA = document.getElementById("filtro-estado-anio");
+    const selM = document.getElementById("filtro-estado-mes");
     selK.innerHTML = '<option value="">Todos los contratos</option>';
-    contratos.forEach(k => selK.appendChild(new Option(k, k)));
-
-    // Poblar filtro años
-    const anios = [...new Set(estadoData.map(r => r.periodo.split("-")[0]))].sort().reverse();
-    const selA  = document.getElementById("filtro-estado-anio");
     selA.innerHTML = '<option value="">Todos los años</option>';
-    anios.forEach(a => selA.appendChild(new Option(a, a)));
-
-    // Poblar filtro meses
-    const meses = [...new Set(estadoData.map(r => r.periodo.split("-")[1]))].sort();
-    const selM  = document.getElementById("filtro-estado-mes");
     selM.innerHTML = '<option value="">Todos los meses</option>';
-    meses.forEach(m => selM.appendChild(new Option(MESES_FULL[parseInt(m)], m)));
-
+    conts.forEach(k=>selK.appendChild(new Option(k,k)));
+    anios.forEach(a=>selA.appendChild(new Option(a,a)));
+    meses.forEach(m=>selM.appendChild(new Option(MESES_FULL[parseInt(m)],m)));
     filtrarEstado();
-  } catch(err) { console.error(err); }
+  } catch(e) { console.error(e); }
 }
 
-function filtrarEstado() {
-  estadoPagina = 1;
-  renderEstado();
-}
+function filtrarEstado() { estadoPagina=1; renderEstado(); }
 
 function renderEstado() {
   const k    = document.getElementById("filtro-estado-k").value;
@@ -486,61 +715,57 @@ function renderEstado() {
   const mes  = document.getElementById("filtro-estado-mes").value;
   const tipo = document.getElementById("filtro-estado-tipo").value;
 
-  const filtrado = estadoData.filter(r => {
-    const [rAnio, rMes] = r.periodo.split("-");
-    if (k    && r.contrato !== k)           return false;
-    if (anio && rAnio !== anio)             return false;
-    if (mes  && rMes  !== mes)              return false;
-    if (tipo === "pendiente" && r.cargado)  return false;
-    if (tipo === "cargado"   && !r.cargado) return false;
+  const filtrado = estadoData.filter(r=>{
+    const [rA,rM]=r.periodo.split("-");
+    if(k&&r.contrato!==k)return false;
+    if(anio&&rA!==anio)return false;
+    if(mes&&rM!==mes)return false;
+    if(tipo==="pendiente"&&r.cargado)return false;
+    if(tipo==="cargado"&&!r.cargado)return false;
     return true;
   });
 
-  const totalPend = filtrado.filter(r => !r.cargado).length;
-  const totalCarg = filtrado.filter(r =>  r.cargado).length;
-  document.getElementById("estado-resumen").innerHTML = `
+  const totalPend=filtrado.filter(r=>!r.cargado).length;
+  const totalCarg=filtrado.filter(r=>r.cargado).length;
+  document.getElementById("estado-resumen").innerHTML=`
     <span class="badge badge-ok"  style="font-size:12px;padding:5px 12px">✓ ${totalCarg} cargados</span>
     <span class="badge badge-err" style="font-size:12px;padding:5px 12px">⚠ ${totalPend} pendientes</span>
   `;
 
-  const total    = filtrado.length;
-  const totalPag = Math.ceil(total / ESTADO_POR_PAG) || 1;
-  const inicio   = (estadoPagina - 1) * ESTADO_POR_PAG;
-  const pagina   = filtrado.slice(inicio, inicio + ESTADO_POR_PAG);
+  const total=filtrado.length, totalPag=Math.ceil(total/ESTADO_POR_PAG)||1;
+  const inicio=(estadoPagina-1)*ESTADO_POR_PAG;
+  const pagina=filtrado.slice(inicio,inicio+ESTADO_POR_PAG);
 
-  document.getElementById("estado-pag-info").textContent =
-    total ? `Mostrando ${inicio+1}–${Math.min(inicio+ESTADO_POR_PAG,total)} de ${total}` : "";
-  document.getElementById("estado-btn-prev").disabled = estadoPagina <= 1;
-  document.getElementById("estado-btn-next").disabled = estadoPagina >= totalPag;
+  document.getElementById("estado-pag-info").textContent=
+    total?`Mostrando ${inicio+1}–${Math.min(inicio+ESTADO_POR_PAG,total)} de ${total}`:"";
+  document.getElementById("estado-btn-prev").disabled=estadoPagina<=1;
+  document.getElementById("estado-btn-next").disabled=estadoPagina>=totalPag;
 
-  if (!pagina.length) {
-    document.getElementById("body-estado").innerHTML =
+  if(!pagina.length){
+    document.getElementById("body-estado").innerHTML=
       '<tr><td colspan="6" style="text-align:center;color:var(--gris-texto)">Sin datos</td></tr>';
     return;
   }
 
-  document.getElementById("body-estado").innerHTML = pagina.map(r => {
-    const hoy  = new Date();
-    const [anioP, mesP] = r.periodo.split("-").map(Number);
-    const esPasado   = anioP < hoy.getFullYear() || (anioP === hoy.getFullYear() && mesP < hoy.getMonth() + 1);
-    const badgeClass = r.cargado ? "badge-ok" : esPasado ? "badge-err" : "badge-warn";
-    const badgeText  = r.cargado ? "✓ Cargado" : esPasado ? "⚠ Vencido" : "Pendiente";
-    const rowBg      = !r.cargado && esPasado ? "background:var(--rojo-light)" : !r.cargado ? "background:var(--amarillo-light)" : "";
+  document.getElementById("body-estado").innerHTML=pagina.map(r=>{
+    const hoy=new Date();
+    const [aP,mP]=r.periodo.split("-").map(Number);
+    const esPasado=aP<hoy.getFullYear()||(aP===hoy.getFullYear()&&mP<hoy.getMonth()+1);
+    const bCls=r.cargado?"badge-ok":esPasado?"badge-err":"badge-warn";
+    const bTxt=r.cargado?"✓ Cargado":esPasado?"⚠ Vencido":"Pendiente";
+    const rowBg=!r.cargado&&esPasado?"background:var(--rojo-light)":!r.cargado?"background:var(--amarillo-light)":"";
     return `<tr style="${rowBg}">
       <td><strong>${r.periodo}</strong></td>
       <td><span class="badge badge-info">${r.contrato}</span></td>
-      <td style="text-align:center"><span class="badge ${badgeClass}">${badgeText}</span></td>
-      <td>${r.usuario || "—"}</td>
-      <td>${r.cargado_en || "—"}</td>
-      <td style="text-align:right">${r.filas_cargadas !== null ? Number(r.filas_cargadas).toLocaleString("es-AR") : "—"}</td>
+      <td style="text-align:center"><span class="badge ${bCls}">${bTxt}</span></td>
+      <td>${r.usuario||"—"}</td>
+      <td>${r.cargado_en||"—"}</td>
+      <td style="text-align:right">${r.filas_cargadas!==null?Number(r.filas_cargadas).toLocaleString("es-AR"):"—"}</td>
     </tr>`;
   }).join("");
 }
 
-function cambiarPaginaEstado(dir) {
-  estadoPagina += dir;
-  renderEstado();
-}
+function cambiarPaginaEstado(dir){estadoPagina+=dir;renderEstado();}
 
 init();
 </script>
