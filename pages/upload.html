@@ -390,7 +390,7 @@ function renderTabla() {
       <td>
         <select class="celda-edit" style="width:80px"
                 title="${esMaestro ? "Contrato del maestro de ítems" : "Modificado"}"
-                onchange="editarCampo(${idx},'contrato',this.value)">
+                onchange="editarContrato(${idx}, this.value)">
           ${contratosDisponibles.map(k =>
             `<option value="${k}" ${k===contrato?"selected":""}>${k}</option>`
           ).join("")}
@@ -425,6 +425,12 @@ function renderTabla() {
 function validarProvincia(sel, idx) {
   const ok = provincias.some(p => p.provincia === sel.value);
   sel.className = ok ? "celda-edit" : "celda-edit invalida";
+  actualizarMetricas();
+}
+
+function editarContrato(idx, valor) {
+  filasEditables[idx]["contrato"]         = valor;
+  filasEditables[idx]["contrato_editado"] = valor; // marca que fue editado manualmente
   actualizarMetricas();
 }
 
