@@ -35,20 +35,42 @@
     /* Barra de filtros de gráficos */
     .filtro-graficos {
       background:var(--blanco); border:1px solid var(--gris-borde);
-      border-radius:var(--radio); padding:.9rem 1.25rem;
+      border-radius:var(--radio); padding:.65rem 1.25rem;
       box-shadow:var(--sombra); margin-bottom:1.25rem;
-      display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;
+      display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;
     }
-    .fg-grupo { display:flex; flex-direction:column; gap:4px; }
-    .fg-grupo label { font-size:11px; font-weight:500; color:var(--gris-texto); text-transform:uppercase; letter-spacing:.3px; margin:0; }
-    .fg-sep { font-size:16px; color:var(--gris-texto); padding-bottom:4px; }
+    .fg-sep-v { width:1px; height:22px; background:var(--gris-borde); flex-shrink:0; }
 
-    /* Total del período */
-    .total-periodo {
-      padding-bottom:4px;
-      font-size:13px; font-weight:600; color:var(--primario);
+    /* Período inline */
+    .periodo-inline { display:flex; align-items:center; gap:6px; font-size:13px; }
+    .periodo-inline label { color:var(--gris-texto); font-size:11px; white-space:nowrap; }
+    .periodo-inline select { font-size:12px; padding:4px 6px; border:1px solid var(--gris-borde); border-radius:6px; }
+
+    /* Pastilla toggle */
+    .pill-toggle {
+      display:flex; background:var(--gris-bg);
+      border-radius:20px; padding:2px; gap:2px;
     }
-    .total-periodo span { font-size:11px; color:var(--gris-texto); font-weight:400; display:block; }
+    .pill-btn {
+      padding:4px 12px; border-radius:18px; border:none;
+      font-size:12px; font-weight:500; cursor:pointer;
+      background:transparent; color:var(--gris-texto);
+      transition:all .15s; white-space:nowrap;
+    }
+    .pill-btn.active {
+      background:var(--blanco); color:var(--primario);
+      box-shadow:0 1px 3px rgba(0,0,0,.12);
+    }
+
+    /* Total del período — separado, debajo */
+    .total-bloque {
+      background:var(--blanco); border:1px solid var(--gris-borde);
+      border-radius:var(--radio); padding:.75rem 1.25rem;
+      box-shadow:var(--sombra); margin-bottom:1.25rem;
+      display:flex; align-items:baseline; gap:12px;
+    }
+    .total-label { font-size:12px; color:var(--gris-texto); }
+    .total-valor { font-size:26px; font-weight:700; color:var(--primario); }
 
     /* Botón dropdown contratos */
     .btn-contratos-drop {
@@ -178,9 +200,10 @@
     </div>
 
     <!-- Filtros de gráficos -->
+    <!-- Barra de filtros -->
     <div class="filtro-graficos" id="filtros-bar-dash" style="position:relative">
 
-      <!-- Dropdown multiselect de contratos -->
+      <!-- Dropdown contratos -->
       <div class="drop-wrapper">
         <button class="btn-contratos-drop" id="btn-cont-drop" onclick="toggleContratosDropdown()">
           <span id="btn-cont-label">Contratos</span>
@@ -202,37 +225,39 @@
         </div>
       </div>
 
-      <div class="fg-sep" style="width:1px;height:24px;background:var(--gris-borde)"></div>
+      <div class="fg-sep-v"></div>
 
-      <div class="fg-grupo">
+      <!-- Período -->
+      <div class="periodo-inline">
         <label>Desde</label>
-        <div style="display:flex;gap:6px">
-          <select id="fg-desde-mes" style="width:auto"></select>
-          <select id="fg-desde-anio" style="width:auto"></select>
-        </div>
+        <select id="fg-desde-mes"></select>
+        <select id="fg-desde-anio"></select>
       </div>
-      <div class="fg-sep">→</div>
-      <div class="fg-grupo">
+      <span style="color:var(--gris-texto);font-size:13px">→</span>
+      <div class="periodo-inline">
         <label>Hasta</label>
-        <div style="display:flex;gap:6px">
-          <select id="fg-hasta-mes" style="width:auto"></select>
-          <select id="fg-hasta-anio" style="width:auto"></select>
-        </div>
+        <select id="fg-hasta-mes"></select>
+        <select id="fg-hasta-anio"></select>
       </div>
 
-      <div class="fg-sep" style="width:1px;height:24px;background:var(--gris-borde)"></div>
+      <div class="fg-sep-v"></div>
 
-      <div class="toggle-bar">
-        <button class="toggle-btn active" id="btn-fact" onclick="setModo('facturacion')">$ Facturación</button>
-        <button class="toggle-btn" id="btn-pgn" onclick="setModo('pgn')">PGN</button>
+      <!-- Toggle PGN/Facturación -->
+      <div class="pill-toggle">
+        <button class="pill-btn active" id="btn-fact" onclick="setModo('facturacion')">$ Facturación</button>
+        <button class="pill-btn" id="btn-pgn" onclick="setModo('pgn')">PGN</button>
       </div>
 
-      <button class="btn btn-primary" onclick="aplicarFiltroGraficos()">Aplicar</button>
-      <button class="btn" onclick="resetFiltroGraficos()">↺</button>
-
-      <div class="total-periodo" id="total-periodo" style="margin-left:auto">
-        <span>Total en el período</span>—
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn" onclick="resetFiltroGraficos()" style="font-size:11px">↺</button>
+        <button class="btn btn-primary" onclick="aplicarFiltroGraficos()" style="font-size:12px">Aplicar</button>
       </div>
+    </div>
+
+    <!-- Total del período — bloque separado -->
+    <div class="total-bloque" id="total-bloque" style="display:none">
+      <span class="total-label" id="total-label">Total facturado en el período</span>
+      <span class="total-valor" id="total-valor">—</span>
     </div>
 
     <!-- Gráficos -->
@@ -541,6 +566,8 @@ function setModo(nuevoModo) {
   modo = nuevoModo;
   document.getElementById("btn-fact").classList.toggle("active", modo==="facturacion");
   document.getElementById("btn-pgn").classList.toggle("active",  modo==="pgn");
+  // Actualizar label del total
+  document.getElementById("total-label").textContent = modo==="pgn" ? "Total PGN en el período" : "Total facturado en el período";
   document.getElementById("linea-title").textContent = modo==="pgn" ? "Evolución mensual (PGN)" : "Evolución mensual";
   if (charts.linea)      { charts.linea.destroy();      delete charts.linea; }
   if (charts.interanual) { charts.interanual.destroy(); delete charts.interanual; }
@@ -555,11 +582,16 @@ function renderGraficos(linea, interanual) {
   // Total del período
   const totalPeriodo = linea.reduce((s,d) => s + Number(d.monto_total||0), 0);
   const totalPGN     = linea.reduce((s,d) => s + Number(d.pgn_total||0), 0);
-  const el = document.getElementById("total-periodo");
+  // Mostrar total en bloque separado
+  const bloque = document.getElementById("total-bloque");
+  const valorEl = document.getElementById("total-valor");
+  bloque.style.display = "flex";
   if (modo === "pgn") {
-    el.innerHTML = `<span>Total PGN en el período</span>${Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1})} PGN`;
+    document.getElementById("total-label").textContent = "Total PGN en el período";
+    valorEl.textContent = Number(totalPGN).toLocaleString("es-AR",{maximumFractionDigits:1}) + " PGN";
   } else {
-    el.innerHTML = `<span>Total facturado en el período</span>${formatMonto(totalPeriodo)}`;
+    document.getElementById("total-label").textContent = "Total facturado en el período";
+    valorEl.textContent = formatMonto(totalPeriodo);
   }
 
   if (charts.linea)      { charts.linea.destroy();      delete charts.linea; }
