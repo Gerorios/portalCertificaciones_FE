@@ -49,6 +49,25 @@
       </div>
     </div>
 
+    <!-- Presupuestos por contrato -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2>Presupuesto por contrato (Naturgy)</h2>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalPresupuestoNuevo()">+ Nuevo presupuesto</button>
+      </div>
+      <div id="alerta-presupuestos" style="margin-bottom:.5rem"></div>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Contrato</th><th>Período</th><th style="text-align:right">Presupuesto</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="body-presupuestos">
+            <tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Usuarios -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
@@ -68,6 +87,45 @@
       </div>
     </div>
   </main>
+</div>
+
+<!-- Modal nuevo / editar presupuesto -->
+<div class="modal-bg" id="modal-bg-presupuesto">
+  <div class="modal">
+    <h2 id="modal-presupuesto-titulo">Nuevo presupuesto</h2>
+    <input type="hidden" id="mp-id">
+
+    <div class="form-group">
+      <label>Contrato</label>
+      <select id="mp-contrato"></select>
+    </div>
+    <div class="form-group">
+      <label>Período desde</label>
+      <input type="date" id="mp-desde">
+    </div>
+    <div class="form-group">
+      <label>Período hasta</label>
+      <input type="date" id="mp-hasta">
+    </div>
+    <div class="form-group">
+      <label>Monto presupuestado ($)</label>
+      <input type="number" id="mp-monto" placeholder="150000000" min="0">
+    </div>
+    <div class="form-group" id="grupo-mp-activo" style="display:none">
+      <label>Estado</label>
+      <select id="mp-activo">
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
+    </div>
+
+    <div id="alerta-modal-presupuesto"></div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModalPresupuesto()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-presupuesto" onclick="guardarPresupuesto()">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal nuevo / editar usuario -->
@@ -124,18 +182,115 @@ Auth.requireLogin();
 Auth.requireAdmin();
 renderSidebar("admin");
 
+let contratosDisponibles = [];
+
 async function cargarDatos() {
   try {
-    const [stats, usuarios] = await Promise.all([
+    const [stats, usuarios, contratos, presupuestos] = await Promise.all([
       get("/admin/estadisticas"),
       get("/admin/usuarios"),
+      get("/items/contratos"),
+      get("/admin/presupuestos"),
     ]);
     renderStats(stats);
     renderUsuarios(usuarios);
+    contratosDisponibles = contratos;
+    document.getElementById("mp-contrato").innerHTML =
+      contratos.map(c => `<option value="${c.codigo_k}">${c.codigo_k}</option>`).join("");
+    renderPresupuestos(presupuestos);
   } catch (err) {
     console.error(err);
   }
 }
+
+function renderPresupuestos(lista) {
+  if (!lista.length) {
+    document.getElementById("body-presupuestos").innerHTML =
+      `<tr><td colspan="5" style="text-align:center;color:var(--gris-texto)">Sin presupuestos cargados</td></tr>`;
+    return;
+  }
+  document.getElementById("body-presupuestos").innerHTML = lista.map(p => `
+    <tr>
+      <td><span class="badge badge-info">${p.codigo_k}</span></td>
+      <td>${formatFecha(p.periodo_desde)} — ${formatFecha(p.periodo_hasta)}</td>
+      <td style="text-align:right;font-weight:500">${formatMonto(p.monto_presupuesto)}</td>
+      <td><span class="badge ${p.activo ? "badge-ok" : "badge-err"}">${p.activo ? "Activo" : "Inactivo"}</span></td>
+      <td>
+        <button class="btn btn-sm" onclick='abrirModalPresupuestoEditar(${JSON.stringify(p)})'>Editar</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function abrirModalPresupuestoNuevo() {
+  document.getElementById("modal-presupuesto-titulo").textContent = "Nuevo presupuesto";
+  document.getElementById("mp-id").value = "";
+  document.getElementById("mp-contrato").disabled = false;
+  document.getElementById("mp-contrato").value = contratosDisponibles[0]?.codigo_k || "";
+  document.getElementById("mp-desde").value = "";
+  document.getElementById("mp-hasta").value = "";
+  document.getElementById("mp-monto").value = "";
+  document.getElementById("grupo-mp-activo").style.display = "none";
+  clearAlert(document.getElementById("alerta-modal-presupuesto"));
+  document.getElementById("modal-bg-presupuesto").classList.add("open");
+}
+
+function abrirModalPresupuestoEditar(p) {
+  document.getElementById("modal-presupuesto-titulo").textContent = `Editar presupuesto — ${p.codigo_k}`;
+  document.getElementById("mp-id").value = p.id_presupuesto;
+  document.getElementById("mp-contrato").value = p.codigo_k;
+  document.getElementById("mp-contrato").disabled = true; // el contrato no se reasigna, se crea uno nuevo
+  document.getElementById("mp-desde").value = p.periodo_desde;
+  document.getElementById("mp-hasta").value = p.periodo_hasta;
+  document.getElementById("mp-monto").value = p.monto_presupuesto;
+  document.getElementById("mp-activo").value = p.activo ? "true" : "false";
+  document.getElementById("grupo-mp-activo").style.display = "block";
+  clearAlert(document.getElementById("alerta-modal-presupuesto"));
+  document.getElementById("modal-bg-presupuesto").classList.add("open");
+}
+
+function cerrarModalPresupuesto() {
+  document.getElementById("modal-bg-presupuesto").classList.remove("open");
+}
+
+async function guardarPresupuesto() {
+  const id     = document.getElementById("mp-id").value;
+  const codigo_k = document.getElementById("mp-contrato").value;
+  const desde  = document.getElementById("mp-desde").value;
+  const hasta  = document.getElementById("mp-hasta").value;
+  const monto  = parseFloat(document.getElementById("mp-monto").value);
+  const alertaM = document.getElementById("alerta-modal-presupuesto");
+
+  if (!desde || !hasta || !monto) { showAlert(alertaM, "Completá período y monto"); return; }
+  if (hasta <= desde) { showAlert(alertaM, "El período 'hasta' debe ser posterior al 'desde'"); return; }
+
+  const btn = document.getElementById("btn-guardar-presupuesto");
+  btn.disabled = true;
+
+  try {
+    if (id) {
+      const activo = document.getElementById("mp-activo").value === "true";
+      await patch(`/admin/presupuestos/${id}`, {
+        periodo_desde: desde, periodo_hasta: hasta, monto_presupuesto: monto, activo,
+      });
+    } else {
+      await post("/admin/presupuestos", {
+        codigo_k, periodo_desde: desde, periodo_hasta: hasta, monto_presupuesto: monto,
+      });
+    }
+    cerrarModalPresupuesto();
+    showAlert(document.getElementById("alerta-presupuestos"), "Presupuesto guardado correctamente", "ok");
+    renderPresupuestos(await get("/admin/presupuestos"));
+  } catch (err) {
+    showAlert(alertaM, err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById("modal-bg-presupuesto").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-bg-presupuesto")) cerrarModalPresupuesto();
+});
 
 function renderStats(s) {
   document.getElementById("metrics-admin").innerHTML = `
