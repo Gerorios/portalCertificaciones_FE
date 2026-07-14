@@ -429,8 +429,17 @@ function validarProvincia(sel, idx) {
 }
 
 function editarContrato(idx, valor) {
-  filasEditables[idx]["contrato"]         = valor;
-  filasEditables[idx]["contrato_editado"] = valor; // marca que fue editado manualmente
+  const itemCodigo = filasEditables[idx].item_codigo;
+
+  // Aplicar a todas las filas del mismo ítem (puede repetirse por provincia/hoja)
+  filasEditables.forEach(f => {
+    if (f.item_codigo === itemCodigo) {
+      f.contrato         = valor;
+      f.contrato_editado = valor; // marca que fue editado manualmente
+    }
+  });
+
+  renderTabla();
   actualizarMetricas();
 }
 
