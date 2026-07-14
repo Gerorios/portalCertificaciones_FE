@@ -197,6 +197,26 @@
       border-radius: 20px; background: var(--primario-light);
       color: var(--primario-dark); font-weight: 500; margin-left: 6px; vertical-align: middle;
     }
+
+    /* Medidores de presupuesto por contrato */
+    .medidor-item { margin-bottom: 1.15rem; }
+    .medidor-item:last-child { margin-bottom: 0; }
+    .medidor-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 5px; gap: 8px; flex-wrap: wrap;
+    }
+    .medidor-nombre { font-size: 13px; font-weight: 700; }
+    .medidor-desc   { font-size: 11px; color: var(--gris-texto); margin-left: 6px; }
+    .medidor-estado { font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .medidor-track {
+      height: 14px; border-radius: 7px; background: var(--gris-bg);
+      overflow: hidden; position: relative;
+    }
+    .medidor-fill { height: 100%; border-radius: 7px; transition: width .3s ease; }
+    .medidor-footer {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--gris-texto); margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -297,6 +317,23 @@
     <!-- KPIs -->
     <div class="kpi-grid" id="kpis">
       <div class="kpi"><div class="kpi-label">Cargando...</div><div class="kpi-val">—</div></div>
+    </div>
+
+    <!-- Presupuesto Naturgy por contrato -->
+    <div class="chart-card" id="card-presupuesto" style="display:none">
+      <div class="chart-title">Presupuesto Naturgy por contrato</div>
+      <div class="chart-sub">Consumo en $ certificado contra el presupuesto asignado por ciclo</div>
+      <div class="kpi-grid" id="kpis-presupuesto" style="margin-bottom:1.1rem"></div>
+      <div id="medidores-presupuesto"></div>
+      <button class="btn btn-sm" onclick="toggleTablaPresupuesto()" style="margin-top:1rem">Ver como tabla</button>
+      <div class="tabla-wrap" id="tabla-presupuesto-wrap" style="display:none;margin-top:.75rem">
+        <table style="font-size:13px">
+          <thead>
+            <tr><th>Contrato</th><th>Período</th><th style="text-align:right">Presupuesto</th><th style="text-align:right">Consumido</th><th style="text-align:right">%</th></tr>
+          </thead>
+          <tbody id="body-tabla-presupuesto"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Evolución mensual -->
@@ -405,6 +442,94 @@ async function init() {
 
   aplicar();
   cargarEstado();
+  cargarPresupuesto();
+}
+
+// ── Presupuesto Naturgy por contrato ────────────────────────────
+function estadoPresupuesto(pct) {
+  // Nota: --verde del sistema es alias del dorado de marca (#DCA028), casi
+  // indistinguible de --amarillo (#D97706). Para este indicador de estado
+  // usamos un verde real (#16A34A) para que "en curva" se distinga de un
+  // vistazo de "cerca del límite" (validado con dataviz/validate_palette.js).
+  if (pct >= 100) return { color: "var(--rojo)",     icono: "⛔", texto: "Excedido" };
+  if (pct >= 80)  return { color: "var(--amarillo)", icono: "⚠",  texto: "Cerca del límite" };
+  return { color: "#16A34A", icono: "✓", texto: "En curva" };
+}
+
+async function cargarPresupuesto() {
+  const rol = Auth.getUser()?.rol;
+  if (rol !== "admin" && rol !== "gerente") return; // sección exclusiva de gerencia/admin
+
+  try {
+    const datos = await get("/analytics/presupuesto");
+    document.getElementById("card-presupuesto").style.display = datos.length ? "block" : "none";
+    if (datos.length) renderPresupuesto(datos);
+  } catch (e) { console.error(e); }
+}
+
+function renderPresupuesto(datos) {
+  const totalPresupuesto = datos.reduce((s, d) => s + d.monto_presupuesto, 0);
+  const totalConsumido   = datos.reduce((s, d) => s + d.consumido, 0);
+  const pctGlobal        = totalPresupuesto ? Math.round(totalConsumido / totalPresupuesto * 100) : 0;
+  const enAlerta         = datos.filter(d => d.pct >= 80).length;
+
+  document.getElementById("kpis-presupuesto").innerHTML = `
+    <div class="kpi">
+      <div class="kpi-label">Presupuesto total</div>
+      <div class="kpi-val">${formatMonto(totalPresupuesto)}</div>
+    </div>
+    <div class="kpi sec">
+      <div class="kpi-label">Consumido total</div>
+      <div class="kpi-val">${formatMonto(totalConsumido)}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">% Global consumido</div>
+      <div class="kpi-val">${pctGlobal}%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Contratos en alerta</div>
+      <div class="kpi-val" style="${enAlerta ? "color:var(--rojo)" : ""}">${enAlerta}</div>
+    </div>
+  `;
+
+  const ordenado = [...datos].sort((a, b) => b.pct - a.pct);
+
+  document.getElementById("medidores-presupuesto").innerHTML = ordenado.map(d => {
+    const { color, icono, texto } = estadoPresupuesto(d.pct);
+    const anchoFill = Math.min(d.pct, 100);
+    return `
+      <div class="medidor-item">
+        <div class="medidor-header">
+          <div>
+            <span class="medidor-nombre">${d.contrato}</span>
+            <span class="medidor-desc">${d.descripcion || ""}</span>
+          </div>
+          <div class="medidor-estado" style="color:${color}">${icono} ${texto}</div>
+        </div>
+        <div class="medidor-track">
+          <div class="medidor-fill" style="width:${anchoFill}%;background:${color}"></div>
+        </div>
+        <div class="medidor-footer">
+          <span>${formatMonto(d.consumido)} consumido de ${formatMonto(d.monto_presupuesto)}</span>
+          <span style="font-weight:600">${d.pct}%</span>
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("body-tabla-presupuesto").innerHTML = ordenado.map(d => `
+    <tr>
+      <td><span class="badge badge-info">${d.contrato}</span></td>
+      <td>${formatFecha(d.periodo_desde)} — ${formatFecha(d.periodo_hasta)}</td>
+      <td style="text-align:right">${formatMonto(d.monto_presupuesto)}</td>
+      <td style="text-align:right">${formatMonto(d.consumido)}</td>
+      <td style="text-align:right;font-weight:600">${d.pct}%</td>
+    </tr>
+  `).join("");
+}
+
+function toggleTablaPresupuesto() {
+  const w = document.getElementById("tabla-presupuesto-wrap");
+  w.style.display = w.style.display === "none" ? "block" : "none";
 }
 
 // ── Dropdown avanzado ─────────────────────────────────────────
