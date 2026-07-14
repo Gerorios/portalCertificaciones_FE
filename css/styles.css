@@ -230,6 +230,7 @@ tr.fila-error td { background: var(--rojo-light); }
   position: fixed;
   top: 0; left: 0; bottom: 0;
   z-index: 100;
+  transition: width .2s ease;
 }
 
 .sidebar-logo {
@@ -315,6 +316,7 @@ tr.fila-error td { background: var(--rojo-light); }
   flex: 1;
   padding: 1.5rem;
   max-width: 1200px;
+  transition: margin-left .2s ease;
 }
 
 .page-header {
@@ -357,3 +359,49 @@ tr.fila-error td { background: var(--rojo-light); }
   .main-content { margin-left: 0; padding: 1rem; }
   .metrics-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Sidebar toggle ── */
+.sidebar-toggle-btn {
+  background: rgba(255,255,255,.08);
+  border: none;
+  color: rgba(255,255,255,.8);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.sidebar-toggle-btn:hover { background: rgba(255,255,255,.18); color: var(--blanco); }
+
+.nav-item .label { white-space: nowrap; overflow: hidden; }
+.sidebar-footer .btn .label { margin-left: 4px; }
+
+/* ── Sidebar colapsado ── */
+body.sidebar-colapsado .sidebar { width: 60px; }
+body.sidebar-colapsado .main-content { margin-left: 60px; }
+body.sidebar-colapsado .sidebar-logo { justify-content: center; padding: 1rem .5rem; }
+body.sidebar-colapsado .sidebar-logo img,
+body.sidebar-colapsado .sidebar-logo-text,
+body.sidebar-colapsado .nav-item .label,
+body.sidebar-colapsado .user-text,
+body.sidebar-colapsado .sidebar-footer .btn .label {
+  display: none;
+}
+body.sidebar-colapsado .nav-item { justify-content: center; padding: .6rem; }
+body.sidebar-colapsado .user-info { justify-content: center; }
+body.sidebar-colapsado .sidebar-footer .btn { justify-content: center; padding: 8px; }
+
+/* ── Subtítulos de sección (analytics.html) ── */
+.seccion-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--gris-texto);
+  margin: 1.75rem 0 .5rem;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.seccion-titulo:first-of-type { margin-top: 0; }
