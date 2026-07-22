@@ -142,6 +142,7 @@
           <table>
             <thead style="position:sticky;top:0;z-index:1">
               <tr>
+                <th title="Destildá una fila para excluirla de la carga">Cargar</th>
                 <th>Hoja</th>
                 <th>Ítem</th>
                 <th>Tarea</th>
@@ -305,7 +306,7 @@ async function ejecutarPreview() {
   if (!hojasSeleccionadas.size) { alert("Seleccioná al menos una hoja"); return; }
 
   const filas = datosPreview.filas.filter(f => hojasSeleccionadas.has(f.hoja_origen));
-  if (!filas.length) { alert("No hay filas con cantidad mayor a 0 en las hojas seleccionadas"); return; }
+  if (!filas.length) { alert("No hay filas para cargar en las hojas seleccionadas"); return; }
 
   // Para cada fila, resolver el contrato del maestro de ítems
   // El contrato del archivo se ignora — usamos el del maestro como default
@@ -313,6 +314,9 @@ async function ejecutarPreview() {
 
   // Resolver contrato desde el maestro para cada ítem (en paralelo)
   await _resolverContratosDesdeDB(filasEditables);
+
+  // El contrato pudo cambiar: revalidar todas las filas
+  filasEditables.forEach(revalidarFila);
 
   const sel = document.getElementById("filtro-hoja");
   sel.innerHTML = '<option value="">Todas las hojas</option>';
@@ -378,11 +382,19 @@ function renderTabla() {
     const contrato = f.contrato || "";
     const esMaestro= contrato === f.contrato_del_maestro;
 
-    const badge = f.tiene_error
+    const badge = f.excluida
+      ? '<span class="badge" title="No se va a cargar">Excluida</span>'
+      : f.tiene_error
       ? `<span class="badge badge-err" title="${f.error_detalle || "Error"}">⚠ ${f.error_detalle || "Error"}</span>`
       : '<span class="badge badge-ok">OK</span>';
 
-    return `<tr id="fila-${idx}" class="${f.tiene_error ? "fila-error" : ""}">
+    return `<tr id="fila-${idx}" class="${f.tiene_error && !f.excluida ? "fila-error" : ""}"
+        style="${f.excluida ? "opacity:.45" : ""}">
+      <td style="text-align:center">
+        <input type="checkbox" ${f.excluida ? "" : "checked"}
+          title="Destildá para excluir esta fila de la carga"
+          onchange="toggleExcluir(${idx}, !this.checked)">
+      </td>
       <td style="font-size:11px;color:var(--gris-texto);white-space:nowrap">${f.hoja_origen}</td>
       <td><strong>${f.item_codigo}</strong></td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
@@ -425,6 +437,37 @@ function renderTabla() {
 function validarProvincia(sel, idx) {
   const ok = provincias.some(p => p.provincia === sel.value);
   sel.className = ok ? "celda-edit" : "celda-edit invalida";
+}
+
+// Regla de fila cargable (espejo del backend, ver CONTEXT.md): el estado
+// de error se recalcula con cada edición — nunca queda congelado.
+function revalidarFila(f) {
+  const faltas = [];
+
+  if (f.item_en_maestro === false)
+    faltas.push(`Ítem ${f.item_codigo} no encontrado en el maestro`);
+
+  if (!(f.contrato || "").trim()) faltas.push("Falta contrato K");
+
+  const prov = (f.provincia || "").trim();
+  if (!prov)
+    faltas.push("Falta provincia");
+  else if (provincias.length &&
+           !provincias.some(p => p.provincia.toUpperCase() === prov.toUpperCase()))
+    faltas.push(`Provincia '${prov}' inválida`);
+
+  if (!parseFloat(f.cantidades || 0)) faltas.push("Falta cantidad");
+
+  const total = parseFloat(f.total_mes);
+  if (isNaN(total)) faltas.push("Falta total mes");
+
+  f.tiene_error   = faltas.length > 0;
+  f.error_detalle = faltas.join("; ") || null;
+}
+
+function toggleExcluir(idx, excluida) {
+  filasEditables[idx].excluida = excluida;
+  renderTabla();
   actualizarMetricas();
 }
 
@@ -436,6 +479,7 @@ function editarContrato(idx, valor) {
     if (f.item_codigo === itemCodigo) {
       f.contrato         = valor;
       f.contrato_editado = valor; // marca que fue editado manualmente
+      revalidarFila(f);
     }
   });
 
@@ -445,21 +489,23 @@ function editarContrato(idx, valor) {
 
 function editarCampo(idx, campo, valor) {
   filasEditables[idx][campo] = valor;
+  revalidarFila(filasEditables[idx]);
+  renderTabla();
   actualizarMetricas();
 }
 
 function actualizarMetricas() {
-  const total    = filasEditables.reduce((s, f) => s + parseFloat(f.total_mes || 0), 0);
-  const conError = filasEditables.filter(f => f.tiene_error).length;
-  const provInv  = filasEditables.filter(f =>
-    !f.tiene_error &&
-    !provincias.some(p => p.provincia.toUpperCase() === (f.provincia||"").toUpperCase())
-  ).length;
-  const aCargar  = filasEditables.length - conError - provInv;
+  const activas   = filasEditables.filter(f => !f.excluida);
+  const excluidas = filasEditables.length - activas.length;
+  const conError  = activas.filter(f => f.tiene_error).length;
+  const cargables = activas.filter(f => !f.tiene_error);
+  const total     = cargables.reduce((s, f) => s + parseFloat(f.total_mes || 0), 0);
+  const aCargar   = cargables.length;
 
   document.getElementById("metrics-preview").innerHTML = `
     <div class="metric"><div class="metric-label">Filas a cargar</div><div class="metric-val verde">${aCargar}</div></div>
-    <div class="metric"><div class="metric-label">Con problema (se omiten)</div><div class="metric-val rojo">${conError + provInv}</div></div>
+    <div class="metric"><div class="metric-label">Con problema (se omiten)</div><div class="metric-val rojo">${conError}</div></div>
+    ${excluidas ? `<div class="metric"><div class="metric-label">Excluidas por vos</div><div class="metric-val">${excluidas}</div></div>` : ""}
     <div class="metric"><div class="metric-label">Total mes</div><div class="metric-val verde">${formatMonto(total)}</div></div>
   `;
 
@@ -468,27 +514,32 @@ function actualizarMetricas() {
 
   document.getElementById("btn-confirmar").disabled = aCargar === 0;
 
-  const alerta = document.getElementById("alerta-preview");
-  if (conError + provInv > 0)
-    showAlert(alerta, `${conError + provInv} fila(s) con provincia inválida o error serán omitidas.`, "warn");
-  else
-    clearAlert(alerta);
+  // Aviso (no bloqueante) si el total no coincide con el declarado del certificado
+  const alerta    = document.getElementById("alerta-preview");
+  const declarado = datosPreview?.resumen?.total_declarado;
+  const avisos    = [];
+
+  if (conError > 0)
+    avisos.push(`${conError} fila(s) con error serán omitidas — corregilas en la tabla para incluirlas.`);
+
+  if (declarado && Math.abs(total - declarado) > 0.01) {
+    const dif = declarado - total;
+    avisos.push(
+      `El certificado declara ${formatMonto(declarado)} pero las filas a cargar suman ` +
+      `${formatMonto(total)} (${dif > 0 ? "faltan" : "sobran"} ${formatMonto(Math.abs(dif))}).`
+    );
+  }
+
+  if (avisos.length) showAlert(alerta, avisos.join(" "), "warn");
+  else clearAlert(alerta);
 }
 
 document.getElementById("filtro-hoja").addEventListener("change", renderTabla);
 
 // ── PASO 3 → 4: confirmar ────────────────────────────────────
 document.getElementById("btn-confirmar").addEventListener("click", async () => {
-  const invalidas = filasEditables.filter(f =>
-    !f.tiene_error &&
-    !provincias.some(p => p.provincia.toUpperCase() === (f.provincia||"").toUpperCase())
-  );
-  if (invalidas.length) {
-    showAlert(document.getElementById("alerta-preview"),
-      `Corregí las ${invalidas.length} fila(s) con provincia inválida antes de confirmar.`, "err");
-    return;
-  }
-
+  // Las filas con error o excluidas se omiten (el backend revalida igual);
+  // no hace falta bloquear acá — el usuario ya vio los avisos.
   const btn = document.getElementById("btn-confirmar");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Cargando...';
