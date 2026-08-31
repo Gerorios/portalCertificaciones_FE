@@ -308,14 +308,10 @@ async function ejecutarPreview() {
   const filas = datosPreview.filas.filter(f => hojasSeleccionadas.has(f.hoja_origen));
   if (!filas.length) { alert("No hay filas para cargar en las hojas seleccionadas"); return; }
 
-  // Para cada fila, resolver el contrato del maestro de ítems
-  // El contrato del archivo se ignora — usamos el del maestro como default
+  // El contrato de cada fila ya viene resuelto por el backend
+  // (regla: editado > maestro > archivo) en contrato / contrato_archivo /
+  // contrato_del_maestro. Acá solo se revalida y se renderiza.
   filasEditables = filas.map(f => ({ ...f }));
-
-  // Resolver contrato desde el maestro para cada ítem (en paralelo)
-  await _resolverContratosDesdeDB(filasEditables);
-
-  // El contrato pudo cambiar: revalidar todas las filas
   filasEditables.forEach(revalidarFila);
 
   const sel = document.getElementById("filtro-hoja");
@@ -325,46 +321,6 @@ async function ejecutarPreview() {
   renderTabla();
   actualizarMetricas();
   irPaso(3);
-}
-
-async function _resolverContratosDesdeDB(filas) {
-  /**
-   * Consulta el maestro de ítems para asignar el contrato correcto a cada fila.
-   * Si el ítem no existe en el maestro, deja el contrato que traía el archivo.
-   */
-  try {
-    // Obtener todos los ítems únicos
-    const codigos = [...new Set(filas.map(f => f.item_codigo).filter(Boolean))];
-    if (!codigos.length) return;
-
-    // Buscar cada ítem en el maestro
-    const resultados = await Promise.all(
-      codigos.map(codigo =>
-        get(`/items/?buscar=${encodeURIComponent(codigo)}`).catch(() => [])
-      )
-    );
-
-    // Mapear código → contrato del maestro
-    const mapaContrato = {};
-    codigos.forEach((codigo, i) => {
-      const items = resultados[i] || [];
-      // Buscar match exacto
-      const match = items.find(it =>
-        it.item_codigo.replace(",",".") === codigo.replace(",",".")
-      );
-      if (match) mapaContrato[codigo] = match.codigo_k;
-    });
-
-    // Asignar contrato del maestro a cada fila
-    filas.forEach(f => {
-      if (f.item_codigo && mapaContrato[f.item_codigo]) {
-        f.contrato = mapaContrato[f.item_codigo];
-        f.contrato_del_maestro = mapaContrato[f.item_codigo];
-      }
-    });
-  } catch(e) {
-    console.error("Error resolviendo contratos:", e);
-  }
 }
 
 // ── Tabla editable ────────────────────────────────────────────
@@ -379,8 +335,10 @@ function renderTabla() {
     const provVal  = f.provincia || "";
     const provOk   = provincias.some(p => p.provincia.toUpperCase() === provVal.toUpperCase());
     const provCls  = provOk ? "celda-edit" : "celda-edit invalida";
-    const contrato = f.contrato || "";
-    const esMaestro= contrato === f.contrato_del_maestro;
+    const contrato   = f.contrato || "";
+    const esMaestro  = contrato === f.contrato_del_maestro;
+    const reasignada = !f.contrato_editado && f.contrato_archivo
+                       && contrato && contrato !== f.contrato_archivo;
 
     const badge = f.excluida
       ? '<span class="badge" title="No se va a cargar">Excluida</span>'
@@ -411,6 +369,12 @@ function renderTabla() {
             : ""}
         </select>
         ${esMaestro ? '<span title="Del maestro" style="font-size:10px;color:var(--primario)">✓</span>' : '<span title="Modificado" style="font-size:10px;color:var(--amarillo)">✏</span>'}
+        ${reasignada
+          ? `<div style="font-size:10px;color:var(--amarillo);white-space:nowrap"
+                  title="El archivo decía ${f.contrato_archivo}; según el maestro de ítems se carga en ${contrato}">
+               archivo: ${f.contrato_archivo} → ${contrato}
+             </div>`
+          : ""}
       </td>
       <td>
         <select class="${provCls}" onchange="editarCampo(${idx},'provincia',this.value);validarProvincia(this,${idx})">
