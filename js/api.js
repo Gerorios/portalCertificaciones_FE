@@ -3,7 +3,16 @@
    Cliente HTTP centralizado + helpers de auth
 ================================================ */
 
-const API = "https://portalcertificaciones-bk.onrender.com";  // cambiar por la URL de Render en producción
+// URL de la API según dónde corre el frontend:
+//  - dev local (Live Server): backend local en :8000
+//  - Netlify (respaldo): backend de Render
+//  - VPS propio: mismo origen bajo /api (Nginx hace el proxy y saca el prefijo)
+const API =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8000"
+    : window.location.hostname.endsWith("netlify.app")
+      ? "https://portalcertificaciones-bk.onrender.com"
+      : `${window.location.origin}/api`;
 
 /* ── Helpers de token ── */
 const Auth = {
